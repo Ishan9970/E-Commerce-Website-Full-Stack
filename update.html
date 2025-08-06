@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Update Employee Details</title>
+  <style>
+    #updateForm {
+      margin-left: 90px;
+      text-align: center;
+      display: none;
+      margin-top: 20px;
+    }
+    #nameSearchForm {
+      margin-left: 90px; 
+      text-align: center;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center;">Update Your Details</h1>
+
+  <!-- Step 1: Search by Name -->
+  <form id="nameSearchForm">
+    <label for="empNameInput">Enter Employee Name:</label>
+    <input type="text" id="empNameInput" name="empName" placeholder="Employee full or partial name" required>
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- Step 2: Update form -->
+  <form id="updateForm" action="/update-profile" method="POST">
+    <!-- Hidden input for id -->
+    <input type="hidden" name="id" id="id" />
+
+    <label>Enter your First Name:</label>
+    <input type="text" style="margin-left:55px;" name="first_name" id="first_name" required><br><br>
+
+    <label>Enter your Last Name:</label>
+    <input type="text" style="margin-left:55px;" name="last_name" id="last_name" required><br><br>
+
+    <label>Enter your Email:</label>
+    <input type="email" style="margin-left:90px;" name="email" id="email" required><br><br>
+
+    <label>Enter your Password:</label>
+    <input type="password" style="margin-left:67px;" name="password" id="password" required><br><br>
+
+    <button type="reset" style="margin-left:175px;">Reset</button>
+    <button type="submit">Update</button>
+  </form>
+
+  <script>
+    const nameSearchForm = document.getElementById('nameSearchForm');
+    const updateForm = document.getElementById('updateForm');
+
+    nameSearchForm.addEventListener('submit', function(event){
+      event.preventDefault();
+
+      const empName = document.getElementById('empNameInput').value.trim();
+      if (!empName) {
+        alert('Please enter employee name');
+        return;
+      }
+
+      // Use the correct backend search route
+      fetch('/searchEmployeeByName?name=' + encodeURIComponent(empName))
+        .then(response => response.json())
+        .then(data => {
+          if (!data || data.length === 0) {
+            alert('No employee found with that name.');
+            return;
+          }
+
+          // Pick the first result (or implement selection UI if multiple)
+          const emp = data[0];
+
+          // Populate form with backend-expected keys
+          document.getElementById('id').value = emp.id;
+          document.getElementById('first_name').value = emp.first_name || '';
+          document.getElementById('last_name').value = emp.last_name || '';
+          document.getElementById('email').value = emp.email || '';
+          document.getElementById('password').value = ''; // Let user enter a new password
+          
+
+          // Show the update form
+          nameSearchForm.style.display = 'none';
+          updateForm.style.display = 'block';
+
+          
+        })
+        .catch((err) => {
+          console.error('Fetch error:', err);
+          alert('Error searching for employee.');
+        });
+    });
+  </script>
+</body>
+</html>
