@@ -1,0 +1,48 @@
+product_details.html
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Product Details</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f6fa; }
+    .container { max-width: 570px; margin: 60px auto; background: #fff; border-radius: 16px; padding: 30px 36px; box-shadow: 0 8px 28px #c0e8ef44; }
+    .name { font-size: 2rem; margin-bottom: 15px; }
+    .desc { font-size: 1.15rem; margin-bottom: 25px; }
+    .price { font-size: 1.4rem; color: #22865e; margin-bottom: 22px; font-weight: 600; }
+    .img { max-width: 310px; width:100%; border-radius:14px; margin-bottom:20px; }
+  </style>
+</head>
+<body>
+  <div class="container" id="productDetail"></div>
+  <script>
+    // Get product id from URL query string
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get('id');
+    const detailDiv = document.getElementById('productDetail');
+    if (!pid) {
+      detailDiv.innerHTML = "No product selected.";
+    } else {
+      fetch(/product/${encodeURIComponent(pid)})
+        .then(res => {
+          if (!res.ok) throw new Error("not found");
+          return res.json();
+        })
+        .then(product => {
+          detailDiv.innerHTML = `
+            ${product.image_url ? <img class="img" src="${product.image_url}" alt="${product.name}"> : ''}
+            <div class="name">${product.name}</div>
+            <div class="desc">${product.description || "No description available."}</div>
+            <div class="price">$${Number(product.price).toFixed(2)}</div>
+          `;
+        })
+        .catch(() => {
+          detailDiv.innerHTML = "Product not found.";
+        });
+    }
+  </script>
+</body>
+</html>

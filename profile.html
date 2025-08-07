@@ -1,0 +1,165 @@
+profile.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1ee6c2 0%, #0896d2 100%);
+      color: #242b3a;
+      min-height: 100vh;
+    }
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(41, 64, 95, 0.50);
+      padding: 16px 32px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      position: relative;
+    }
+    .brand {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #fff;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      user-select: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .profile-circle {
+      width: 44px;
+      height: 44px;
+      background: #fff;
+      color: #20a39e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      font-weight: bold;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.11);
+      border: 2px solid #1ee6c2;
+      cursor: default;
+      user-select: none;
+    }
+    .profile-container {
+      max-width: 400px;
+      background: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      margin: 3rem auto;
+      padding: 2rem;
+      color: #242b3a;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      color: #0896d2;
+      margin-bottom: 1.5rem;
+    }
+    .profile-field {
+      margin-bottom: 1.2rem;
+    }
+    .profile-label {
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+    .profile-value {
+      font-size: 1.1rem;
+      background: #f7f9fb;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #e1e5e9;
+    }
+    .logout-btn {
+      margin-top: 2rem;
+      background-color: #0896d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: block;
+      width: 100%;
+    }
+    .logout-btn:hover {
+      background-color: #066a9c;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">Website</div>
+    <div class="profile-circle" id="profileCircle" title="Logged in user">--</div>
+  </nav>
+
+  <div class="profile-container" aria-live="polite">
+    <h1>User Profile</h1>
+    <div class="profile-field">
+      <label class="profile-label" for="first_name">First Name:</label>
+      <div id="first_name" class="profile-value"></div>
+    </div>
+    <div class="profile-field">
+      <label class="profile-label" for="last_name">Last Name:</label>
+      <div id="last_name" class="profile-value"></div>
+    </div>
+    <div class="profile-field">
+      <label class="profile-label" for="email">Email:</label>
+      <div id="email" class="profile-value"></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+
+  <script>
+    // On page load: check login and load user info from backend using userId
+    document.addEventListener('DOMContentLoaded', () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      fetch('/user/' + encodeURIComponent(userId))
+        .then(resp => {
+          if (!resp.ok) throw new Error("User not found");
+          return resp.json();
+        })
+        .then(user => {
+          // Set initials
+          function getInitials(first, last) {
+            return (
+              (first ? first[0] : '') +
+              (last ? last[0] : '')
+            ).toUpperCase();
+          }
+          document.getElementById('profileCircle').textContent = getInitials(user.first_name, user.last_name);
+
+          // Fill profile fields
+          document.getElementById('first_name').textContent = user.first_name || '';
+          document.getElementById('last_name').textContent = user.last_name || '';
+          document.getElementById('email').textContent = user.email || '';
+        })
+        .catch(() => {
+          alert('Could not load your profile. Please log in again.');
+          localStorage.removeItem('userId');
+          window.location.href = 'login.html';
+        });
+    });
+
+    function logout() {
+      localStorage.removeItem('userId');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

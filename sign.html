@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Reset and base */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9fafb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    /* Container to hold the form nicely */
+    .signup-container {
+      background: white;
+      padding: 40px 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h1 {
+      margin: 0 0 25px;
+      color: #007acc;
+      font-weight: 700;
+      font-size: 2rem;
+      text-align: center;
+      letter-spacing: 1px;
+      user-select: none;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.25s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: #007acc;
+      outline: none;
+      box-shadow: 0 0 6px #007acc60;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 12px 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      flex: 1;
+      transition: background-color 0.25s ease;
+    }
+
+    button[type="submit"] {
+      background-color: #007acc;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,122,204,0.4);
+    }
+
+    button[type="submit"]:hover {
+      background-color: #005fa3;
+    }
+
+    button[type="reset"] {
+      background-color: #e1e1e1;
+      color: #555;
+    }
+
+    button[type="reset"]:hover {
+      background-color: #c0c0c0;
+    }
+
+    @media (max-width: 480px) {
+      .signup-container {
+        padding: 30px 20px;
+      }
+      button {
+        font-size: 1rem;
+        padding: 10px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="signup-container">
+    <h1>Create Account</h1>
+    <form action="/register" method="POST" novalidate>
+      <label for="first_name">First Name</label>
+      <input type="text" id="first_name" name="first_name" placeholder="Your first name" required autocomplete="given-name" />
+
+      <label for="last_name">Last Name</label>
+      <input type="text" id="last_name" name="last_name" placeholder="Your last name" required autocomplete="family-name" />
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" placeholder="your.email@example.com" required autocomplete="email" />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Create a password" required autocomplete="new-password" />
+
+      <div class="buttons">
+        <button type="reset">Reset</button>
+        <button type="submit">Sign Up</button>
+      </div>
+    </form>
+  </div>
+
+</body>
+</html>
