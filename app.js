@@ -8,7 +8,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -16,7 +15,7 @@ const connection = mysql.createConnection({
   database: 'user_db'
 });
 
-
+// Registration
 app.post('/register', function(req, res) {
   var first_name = req.body.first_name;
   var last_name = req.body.last_name;
@@ -37,7 +36,7 @@ app.post('/register', function(req, res) {
   });
 });
 
-
+// Login
 app.post('/login', function(req, res) {
   var email = req.body.email;
   var password = req.body.password;
@@ -64,7 +63,7 @@ app.post('/login', function(req, res) {
   });
 });
 
-
+// Fetch user profile
 app.get('/user/:id', function(req, res) {
   var userId = req.params.id;
   var sql = 'SELECT id, first_name, last_name, email FROM users WHERE id = ?';
@@ -81,7 +80,7 @@ app.get('/user/:id', function(req, res) {
   });
 });
 
-
+// Update profile
 app.post('/update-profile', function(req, res) {
   var id = req.body.id;
   var first_name = req.body.first_name;
@@ -112,7 +111,7 @@ app.post('/update-profile', function(req, res) {
   });
 });
 
-
+// Delete user
 app.delete('/delete-myself', function(req, res) {
   var id = req.body.id;
   if (!id) {
@@ -133,7 +132,7 @@ app.delete('/delete-myself', function(req, res) {
   });
 });
 
-
+// Product details
 app.get('/product/:id', function(req, res) {
   var productId = req.params.id;
   var sql = 'SELECT id, name, price, description FROM products WHERE id = ?';
@@ -154,45 +153,85 @@ app.get('/product/:id', function(req, res) {
 app.post('/add-to-cart', function(req, res) {
   var userId = req.body.userId;
   var productId = req.body.productId;
-  var quantity = req.body.quantity;
+  var quantity = Number(req.body.quantity);
 
   if (!userId || !productId) {
     res.status(400).json({ error: 'Missing userId or productId' });
     return;
   }
-  
-  if (!quantity) {
+
+  // Handle quantity: default 1 if not sent, clamp minimum to 1 if not 0.
+  if (typeof quantity !== 'number' || isNaN(quantity)) {
     quantity = 1;
   }
-  var findSql = 'SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ?';
+  if (quantity < 0) quantity = 0;
+
+  // Does this item exist for this user already?
+  var findSql = 'SELECT id FROM cart_items WHERE user_id = ? AND product_id = ?';
   connection.query(findSql, [userId, productId], function(err, results) {
     if (err) {
-      res.status(500).json({ error: 'Database error' });
+      res.status(500).json({ error: 'Database error (find existing cart)' });
       return;
     }
     if (results.length > 0) {
-      var currentQty = results[0].quantity;
-      var newQty = Number(currentQty) + Number(quantity);
-      var updateSql = 'UPDATE cart_items SET quantity = ? WHERE id = ?';
-      connection.query(updateSql, [newQty, results[0].id], function(err2) {
-        if (err2) {
-          res.status(500).json({ error: 'Database error' });
-          return;
-        }
-        res.json({ message: 'Cart updated!' });
-      });
+      // If quantity is 0: remove from cart.
+      if (quantity === 0) {
+        var deleteSql = 'DELETE FROM cart_items WHERE id = ?';
+        connection.query(deleteSql, [results[0].id], function(err2) {
+          if (err2) {
+            res.status(500).json({ error: 'Database error (delete cart item)' });
+            return;
+          }
+          res.json({ message: 'Removed from cart!' });
+        });
+      } else {
+        // Update to exact desired quantity
+        var updateSql = 'UPDATE cart_items SET quantity = ? WHERE id = ?';
+        connection.query(updateSql, [quantity, results[0].id], function(err2) {
+          if (err2) {
+            res.status(500).json({ error: 'Database error (update cart item)' });
+            return;
+          }
+          res.json({ message: 'Cart updated!' });
+        });
+      }
     } else {
-      var insertSql = 'INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)';
-      connection.query(insertSql, [userId, productId, quantity], function(err3) {
-        if (err3) {
-          res.status(500).json({ error: 'Database error' });
-          return;
-        }
-        res.json({ message: 'Added to cart!' });
-      });
+      // No row exists yet — insert new if quantity > 0
+      if (quantity > 0) {
+        var insertSql = 'INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)';
+        connection.query(insertSql, [userId, productId, quantity], function(err3) {
+          if (err3) {
+            res.status(500).json({ error: 'Database error (insert cart item)' });
+            return;
+          }
+          res.json({ message: 'Added to cart!' });
+        });
+      } else {
+        // Trying to set to 0 but nothing in cart: ignore, success
+        res.json({ message: 'Nothing to remove.' });
+      }
     }
   });
 });
+
+// Remove from cart endpoint, for explicit removals (optional, for UI "remove" button)
+app.post('/remove-from-cart', function(req, res) {
+  var userId = req.body.userId;
+  var productId = req.body.productId;
+  if (!userId || !productId) {
+    res.status(400).json({ error: 'Missing userId or productId' });
+    return;
+  }
+  var deleteSql = 'DELETE FROM cart_items WHERE user_id = ? AND product_id = ?';
+  connection.query(deleteSql, [userId, productId], function(err, result) {
+    if (err) {
+      res.status(500).json({ error: 'Database error (remove from cart)' });
+      return;
+    }
+    res.json({ message: 'Removed from cart!' });
+  });
+});
+
 app.listen(3000, function() {
   console.log('Server running at http://localhost:3000');
 });
