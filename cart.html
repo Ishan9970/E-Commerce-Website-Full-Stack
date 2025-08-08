@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Cart & Total Bill</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      background: linear-gradient(135deg, #f5f6fa 60%, #cff9e6 100%);
+      min-height: 100vh; 
+      margin: 0;
+      color: #222d3d;
+    }
+    .cart-container {
+      max-width: 720px;
+      margin: 50px auto 0 auto;
+      background: #fff;
+      border-radius: 18px;
+      padding: 36px 38px 24px 38px;
+      box-shadow: 0 8px 40px #4de7b21f, 0 2px 8px #1ee6c245;
+      position: relative;
+      min-height: 50vh;
+    }
+    .cart-title {
+      font-size: 2.3rem;
+      color: #15b892;
+      margin-bottom: 22px;
+      letter-spacing: 2px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .cart-list {
+      margin-bottom: 30px;
+    }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      background: #f9fdfc;
+      box-shadow: 0px 2px 14px #1ee6c217;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      padding: 14px 20px 14px 15px;
+      transition: box-shadow 0.12s, background 0.12s;
+      border: 1.5px solid #d3f2ea;
+    }
+    .cart-item:hover {
+      background: #e2fcf3;
+      box-shadow: 0px 4px 22px #98e7d344;
+      border: 1.7px solid #48e6a7;
+    }
+    .cart-img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      margin-right: 12px;
+      border-radius: 12px;
+      border: 2.5px solid #c4efe4;
+      background: #e0fbf7;
+    }
+    .cart-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .cart-name {
+      font-size: 1.14rem;
+      font-weight: bold;
+      color: #1f4b43;
+      margin-bottom: 2px;
+    }
+    .cart-qty {
+      font-size: 1rem;
+      color: #1ee6c2;
+      font-weight: 600;
+    }
+    .cart-subtotal {
+      font-size: 1.12rem;
+      font-weight: bold;
+      min-width: 80px;
+      color: #15846a;
+      text-align: right;
+    }
+    .cart-price {
+      color: #6e8583;
+      font-weight: normal;
+      font-size: 0.97rem;
+      padding-bottom: 3px;
+    }
+    .cart-total {
+      font-size: 1.7rem;
+      background: linear-gradient(90deg, #7cf6da 38%, #45b3fc 85%);
+      color: #046957;
+      border-radius: 11px;
+      font-weight: 800;
+      box-shadow: 0 2px 18px #187e5c21;
+      padding: 18px 24px 14px 24px;
+      margin-bottom: 18px;
+      margin-top: 20px;
+      letter-spacing: 1.5px;
+      text-align: right;
+      text-shadow: 0 2px 10px #0bdbbe1b;
+    }
+    .cart-empty {
+      text-align: center; 
+      margin: 40px 10px 20px 10px; 
+      color: #999; 
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+    }
+    .cart-actions {
+      text-align: right;
+      margin-top: 14px;
+    }
+    .to-home-btn {
+      background:#1ee6c2;
+      color:#fff;
+      border:none;
+      padding:12px 30px;
+      font-size:1.07rem;
+      border-radius:8px;
+      cursor:pointer;
+      margin-top:12px;
+      letter-spacing: 1.2px;
+      font-weight: 600;
+      transition: background 0.14s;
+      box-shadow: 0 5px 14px #b8f4e2c9;
+    }
+    .to-home-btn:hover {
+      background: #0896d2;
+      color: #fff;
+    }
+    @media(max-width:670px){
+      .cart-container { padding: 14px 6vw 12px 6vw; }
+      .cart-title { font-size: 1.44rem; }
+      .cart-total { font-size:1.18rem; padding: 11px; }
+      .cart-item { flex-direction: column; align-items: flex-start; gap: 0.4rem; padding:11px 7px; }
+      .cart-img { margin: 0 0 6px 0; }
+      .cart-actions { text-align:center;}
+    }
+  </style>
+</head>
+<body>
+  <div class="cart-container" id="cartContainer">
+    <div class="cart-title">🛒 Your Shopping Cart</div>
+    <div class="cart-list" id="cartList">Loading...</div>
+    <div class="cart-total" id="cartTotal"></div>
+    <div class="cart-actions"><button class="to-home-btn" onclick="location.href='welcome.html'">&#8592; Continue Shopping</button></div>
+  </div>
+  <script>
+    // Cart utility (same as other pages)
+    const CART_KEY = "user_cart_quantities";
+    function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
+
+    // Main logic
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert("You must log in first to view your cart!");
+      window.location.href = "login.html";
+    } else {
+      const cartListElem = document.getElementById('cartList');
+      const cartTotalElem = document.getElementById('cartTotal');
+      const cart = getCartFromStorage();
+      const productIds = Object.keys(cart);
+
+      if (productIds.length === 0) {
+        cartListElem.innerHTML = `<div class="cart-empty">Your cart is empty.</div>`;
+        cartTotalElem.textContent = '';
+      } else {
+        Promise.all(productIds.map(pid =>
+          fetch(`/product/${encodeURIComponent(pid)}`)
+            .then(res => res.ok ? res.json() : null)
+            .catch(() => null)
+        ))
+        .then(products => {
+          let total = 0;
+          cartListElem.innerHTML =
+            products.map((prod, idx) => {
+              const pid = productIds[idx];
+              const qty = cart[pid];
+              if (!prod) return '';
+              const subtotal = Number(prod.price) * qty;
+              total += subtotal;
+              return `<div class="cart-item">
+                ${prod.image_url ? `<img src="${prod.image_url}" class="cart-img" alt="${prod.name}">` : ''}
+                <div class="cart-main">
+                  <div class="cart-name">${prod.name || '(No name)'}</div>
+                  <div class="cart-price">Price: $${Number(prod.price).toFixed(2)}</div>
+                  <span class="cart-qty">Quantity: ${qty}</span>
+                </div>
+                <span class="cart-subtotal">$${subtotal.toFixed(2)}</span>
+              </div>`;
+            }).join('');
+          cartTotalElem.innerHTML = `Total Amount: $${total.toFixed(2)}`;
+        })
+        .catch(() => {
+          cartListElem.innerHTML = `<div class="cart-empty">Could not load cart.</div>`;
+          cartTotalElem.textContent = '';
+        });
+      }
+    }
+  </script>
+</body>
+</html>

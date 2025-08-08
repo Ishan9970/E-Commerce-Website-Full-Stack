@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Update Profile</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1ee6c2 0%, #0896d2 100%);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding-top: 60px;
+      color: #242b3a;
+    }
+
+    /* Container */
+    #updateForm {
+      background: #fff;
+      padding: 40px 35px 35px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Heading */
+    h1 {
+      margin-bottom: 30px;
+      font-weight: 700;
+      font-size: 2rem;
+      color: #0896d2;
+      user-select: none;
+    }
+
+    /* Labels */
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      text-align: left;
+      color: #333;
+    }
+
+    /* Inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="hidden"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.8px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: #1ee6c2;
+      outline: none;
+      box-shadow: 0 0 10px #1ee6c2aa;
+    }
+
+    /* Submit button */
+    button[type="submit"] {
+      background-color: #0896d2;
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 12px 0;
+      border-radius: 8px;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 6px 16px rgba(8, 150, 210, 0.45);
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #066a9c;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      #updateForm {
+        padding: 30px 20px 25px;
+        margin: 0 15px;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 25px;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 10px 12px;
+        font-size: 0.95rem;
+      }
+      button[type="submit"] {
+        font-size: 1rem;
+        padding: 11px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <form id="updateForm" action="/update-profile" method="POST" novalidate>
+    <h1>Update Your Profile</h1>
+    <input type="hidden" name="id" id="id" />
+    
+    <label for="first_name">First Name:</label>
+    <input type="text" id="first_name" name="first_name" required />
+
+    <label for="last_name">Last Name:</label>
+    <input type="text" id="last_name" name="last_name" required />
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="password">New Password:</label>
+    <input type="password" id="password" name="password" required />
+
+    <button type="submit">Update</button>
+  </form>
+
+  <script>
+    // 1. Get userId from localStorage (set on login)
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert('Not logged in. Please log in first.');
+      window.location.href = 'login.html';
+    } else {
+      // 2. Prefill form from backend using userId
+      fetch('/user/' + encodeURIComponent(userId))
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to load user profile');
+          }
+          return response.json();
+        })
+        .then(user => {
+          document.getElementById('id').value = user.id || '';
+          document.getElementById('first_name').value = user.first_name || '';
+          document.getElementById('last_name').value = user.last_name || '';
+          document.getElementById('email').value = user.email || '';
+          // Password stays blank for security
+        })
+        .catch(err => {
+          alert('Could not load your profile info.');
+          window.location.href = 'welcome.html';
+        });
+    }
+  </script>
+  
+</body>
+</html>

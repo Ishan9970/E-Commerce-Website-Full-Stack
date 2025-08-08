@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EmployeeFinder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #1ee6c2 0%, #0896d2 100%); color: #242b3a; min-height: 100vh; }
+    .navbar { display: flex; align-items: center; justify-content: space-between; background: rgba(41, 64, 95, 0.50); padding: 16px 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); position: relative; }
+    .brand { font-size: 1.6rem; font-weight: bold; color: #fff; letter-spacing: 2px; text-shadow: 0 2px 12px rgba(0,0,0,0.12); user-select: none; white-space: nowrap; flex-shrink: 0; }
+    .search-container { position: absolute; left: 50%; transform: translateX(-50%); max-width: 420px; width: 100%; display: flex; justify-content: center; box-shadow: 0 6px 24px rgba(30,125,134,0.09); border-radius: 1.2em; background: #fff; overflow: hidden; }
+    .search-container form { flex: 1; display: flex; }
+    .search-bar input[type='text'] { border: none; font-size: 1rem; padding: 13px 14px 13px 20px; outline: none; flex: 1; background: transparent; }
+    .search-bar button { background: #1ee6c2; color: #fff; border: none; font-weight: 600; padding: 0 22px; font-size: 1rem; cursor: pointer; transition: background 0.15s; border-left: 1px solid #e6e8ed; }
+    .search-bar button:hover { background: #0896d2; }
+    .profile-dropdown { display: flex; align-items: center; margin-left: 18px; flex-shrink: 0; }
+    .cart-icon { display: inline-flex; align-items: center; justify-content: center; margin-right: 20px; padding: 0 6px; cursor: pointer; font-size: 1.5rem; color: #fff; user-select: none; }
+    .profile-circle { width: 44px; height: 44px; background: #fff; color: #20a39e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: bold; box-shadow: 0 3px 12px rgba(0,0,0,0.11); border: 2px solid #1ee6c2; cursor: pointer; transition: box-shadow 0.18s; user-select: none; }
+    .profile-circle:hover, .profile-circle.active { box-shadow: 0 2px 20px #1ee6c285; background: #1ee6c2; color: #fff; outline: none; }
+    .dropdown-menu { display: none; position: absolute; top: 56px; right: 0; min-width: 120px; background: #fff; border-radius: 12px; box-shadow: 0 12px 48px #1ee6c23d; z-index: 110; flex-direction: column; border: 1px solid #e1e5e9cc; padding: 4px 0; }
+    .dropdown-menu.show { display: flex; }
+    .dropdown-btn { background: none; border: none; padding: 13px 22px; font-size: 1.05rem; color: #20a39e; cursor: pointer; text-align: left; width: 100%; font-weight: 600; transition: background 0.14s, color 0.14s; }
+    .dropdown-btn:hover { background: #e3f9f7; color: #0896d2; }
+    @media (max-width: 700px) { .navbar { padding: 11px 7vw 8px 7vw; gap: 16px; } .brand { font-size: 1.2rem; } .search-container { position: static; transform: none; max-width: 100%; margin: 0 auto; } .search-bar input[type='text'] { font-size: 0.95rem; } .search-bar button { font-size: 0.95rem; padding: 0 16px; } .profile-circle { width: 35px; height: 35px; font-size: 0.95rem; } }
+    .card-row { display: flex; flex-direction: row; gap: 20px; justify-content: flex-start; align-items: flex-start; }
+    .card-link { text-decoration: none; color: inherit; display: block; }
+    .card { box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); max-width: 300px; margin-left: 10px; margin-right: 10px; text-align: center; font-family: arial; border-radius: 10px; height: 300px; background-color: white; position: relative; transition: box-shadow 0.18s, transform 0.15s; }
+    .card:hover { box-shadow: 0 10px 28px 0 rgba(0, 0, 0, 0.20), 0 6px 20px 0 #1ee6c266; z-index: 2; transform: translateY(-4px) scale(1.04); cursor: pointer; }
+    .price { color: grey; font-size: 22px; }
+    .card button, .qty-btn { border: none; outline: 0; padding: 12px; color: white; background-color: #000; text-align: center; cursor: pointer; font-size: 18px; border-radius: 8px; margin-bottom: 12px; margin-top: 10px; transition: opacity 0.17s; width: 100%; }
+    .qty-btn { width: 100%; background: #333;}
+    .qty-btn.plus { margin-left:3px; background:#1ee6c2; width: 100%;}
+    .qty-btn.minus { margin-right:3px; background:#0896d2; width: 100%;}
+    .card-qty-ui { display:inline-flex; align-items:center; justify-content:center; width: 100%;}
+    .cart-qty-value { display:inline-block; min-width:24px; height: 35px; font-weight: bold; width: 100%; color: #0896d2; background-color: #f5f9fa; border-radius: 7px; font-size:18px; padding-top: 18px;}
+    .card button:hover, .qty-btn:hover { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <span class="brand">Welcome</span>
+    <div class="search-container">
+      <form class="search-bar" action="/search" method="GET" autocomplete="off">
+        <input type="text" name="query" placeholder="Search for item.." required />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+    <div class="profile-dropdown" style="position: relative;">
+      <!-- Cart icon added here -->
+      <span class="cart-icon" id="cartIcon" title="Your Cart" tabindex="0" aria-label="Your Cart">&#128722;</span>
+      <div class="profile-circle" id="profileCircle" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownMenu">IK</div>
+      <div class="dropdown-menu" id="dropdownMenu" role="menu" aria-label="User Actions">
+        <button class="dropdown-btn" onclick="location.href='profile.html'" role="menuitem">Profile</button>
+        <button class="dropdown-btn" onclick="location.href='update.html'" role="menuitem">Update</button>
+        <button class="dropdown-btn" id="deleteBtn" type="button" role="menuitem">Delete</button>
+      </div>
+    </div>
+  </nav>
+
+  <br><br>
+  <div class="card-row">
+    <a href="product_details.html?id=1" class="card-link">
+      <div class="card">
+        <br>
+        <img src="jeans1.jpg" alt="Denim Jeans" style="width:50%" >
+        <h1 style="font-size: 23px;">Tailored Jeans</h1>
+        <p class="price">$20</p>
+        <p class="card-actions"><button type="button" class="add-to-cart-btn" data-product-id="1">Add to Cart</button></p>
+      </div>
+    </a>
+    <a href="product_details.html?id=2" class="card-link">
+      <div class="card">
+        <br>
+        <img src="tshirt1.png" alt="T-Shirt 1" style="width:50%" >
+        <h1 style="font-size: 23px;">T-Shirt 1</h1>
+        <p class="price">$19</p>
+        <p class="card-actions"><button type="button" class="add-to-cart-btn" data-product-id="2">Add to Cart</button></p>
+      </div>
+    </a>
+    <a href="product_details.html?id=3" class="card-link">
+      <div class="card"><br>
+        <img src="jeans2.png" alt="Jeans 2" style="width:50%">
+        <h1 style="font-size: 23px;">Jeans 2</h1>
+        <p class="price">$18</p>
+        <p class="card-actions"><button type="button" class="add-to-cart-btn" data-product-id="3">Add to Cart</button></p>
+      </div>
+    </a>
+    <a href="product_details.html?id=4" class="card-link">
+      <div class="card"><br>
+        <img src="shirt1.png" alt="Shirt 1" style="width:50%" >
+        <h1 style="font-size: 23px;">Shirt 1</h1>
+        <p class="price">$17</p>
+        <p class="card-actions"><button type="button" class="add-to-cart-btn" data-product-id="4">Add to Cart</button></p>
+      </div>
+    </a>
+    <a href="product_details.html?id=5" class="card-link">
+      <div class="card"><br>
+        <img src="shirt2.jpg" alt="Shirt 2" style="width:50%" >
+        <h1 style="font-size: 23px;">Shirt 2</h1>
+        <p class="price">$16</p>
+        <p class="card-actions"><button type="button" class="add-to-cart-btn" data-product-id="5">Add to Cart</button></p>
+      </div>
+    </a>
+  </div>
+
+  <script>
+    // ==== SHARED CART UTILITY ====
+    const CART_KEY = "user_cart_quantities";
+    function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
+    function setCartToStorage(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+    function setProductQty(productId, qty) { const cart = getCartFromStorage(); if (qty > 0) cart[productId]=qty; else delete cart[productId]; setCartToStorage(cart);}
+    function getProductQty(productId) { const cart=getCartFromStorage(); return cart[productId]||0;}
+
+    // == Cart icon click redirects to Total Bill page ==
+    document.getElementById("cartIcon").onclick = function() {
+      window.location.href = "cart.html";
+    };
+
+    // Profile dropdown
+    const profile = document.getElementById('profileCircle');
+    const dropdown = document.getElementById('dropdownMenu');
+    document.addEventListener('click', (event) => {
+      if (profile.contains(event.target)) {
+        const isShown = dropdown.classList.toggle('show');
+        profile.classList.toggle('active', isShown);
+      } else if (!dropdown.contains(event.target)) {
+        dropdown.classList.remove('show');
+        profile.classList.remove('active');
+      }
+    });
+
+    // Profile initials
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      window.location.href = 'login.html';
+    } else {
+      fetch('/user/' + encodeURIComponent(userId))
+        .then(res => {
+          if (!res.ok) throw new Error();
+          return res.json();
+        })
+        .then(user => {
+          const initials = ((user.first_name?.[0] || '') + (user.last_name?.[0] || '')).toUpperCase();
+          document.getElementById('profileCircle').textContent = initials || '--';
+        })
+        .catch(() => {
+          alert('Could not load your profile. Please log in again.');
+          localStorage.removeItem('userId');
+          window.location.href = 'login.html';
+        });
+    }
+
+    // Delete user
+    document.getElementById('deleteBtn').onclick = function() {
+      if (!userId) return window.location.href = 'login.html';
+      if (!confirm("Are you sure you want to permanently delete your account?")) return;
+      fetch('/delete-myself', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userId })
+      })
+      .then(res => res.json())
+      .then (result => {
+        if (result.success) {
+          alert('Your account has been deleted. See you!');
+          localStorage.removeItem('userId');
+          window.location.href = 'login.html';
+        } else {
+          alert(result.message || 'Could not delete your account.');
+        }
+      })
+      .catch(() => {
+        alert('Could not communicate with server.');
+      });
+    };
+
+    // === PRODUCT CARD QTY SELECTOR UI, WITH SYNC ACROSS PAGES ====
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll(".add-to-cart-btn").forEach(function (btn) {
+        const productId = btn.getAttribute("data-product-id");
+        const parent = btn.closest(".card-actions");
+        let qty = getProductQty(productId);
+        if (qty > 0) renderQuantityControls(parent, productId, qty);
+
+        btn.addEventListener("click", function (ev) {
+          ev.stopPropagation(); ev.preventDefault();
+          const userId = localStorage.getItem("userId");
+          if (!userId) { alert("You must log in first to add to cart!"); window.location.href = "login.html"; return;}
+          setProductQty(productId, 1);
+          renderQuantityControls(parent, productId, 1);
+          addOrUpdateCart(productId, 1, userId);
+          notifyQuantityChange(productId, 1);
+        });
+      });
+
+      function renderQuantityControls(parent, productId, quantity) {
+        parent.innerHTML = `<span class="card-qty-ui">
+          <button type="button" class="qty-btn minus" data-product-id="${productId}">-</button>
+          <span class="cart-qty-value">${quantity}</span>
+          <button type="button" class="qty-btn plus" data-product-id="${productId}">+</button>
+        </span>`;
+        parent.querySelector(".minus").onclick = function (ev) {
+          ev.stopPropagation(); ev.preventDefault();
+          const userId = localStorage.getItem("userId");
+          let qty = getProductQty(productId);
+          if (qty > 1) {
+            qty--;
+            setProductQty(productId, qty);
+            renderQuantityControls(parent, productId, qty);
+            addOrUpdateCart(productId, qty, userId);
+            notifyQuantityChange(productId, qty);
+          } else {
+            setProductQty(productId, 0);
+            renderAddToCart(parent, productId);
+            removeFromCart(productId, userId);
+            notifyQuantityChange(productId, 0);
+          }
+        };
+        parent.querySelector(".plus").onclick = function (ev) {
+          ev.stopPropagation(); ev.preventDefault();
+          const userId = localStorage.getItem("userId");
+          let qty = getProductQty(productId);
+          qty++;
+          setProductQty(productId, qty);
+          renderQuantityControls(parent, productId, qty);
+          addOrUpdateCart(productId, qty, userId);
+          notifyQuantityChange(productId, qty);
+        };
+      }
+      function renderAddToCart(parent, productId) {
+        parent.innerHTML = `<button type="button" class="add-to-cart-btn" data-product-id="${productId}">Add to Cart</button>`;
+        parent.querySelector(".add-to-cart-btn").onclick = function (ev) {
+          ev.stopPropagation(); ev.preventDefault();
+          const userId = localStorage.getItem("userId");
+          if (!userId) { alert("You must log in first to add to cart!"); window.location.href = "login.html"; return; }
+          setProductQty(productId, 1);
+          renderQuantityControls(parent, productId, 1);
+          addOrUpdateCart(productId, 1, userId);
+          notifyQuantityChange(productId, 1);
+        };
+      }
+      function addOrUpdateCart(productId, quantity, userId) {
+        fetch('/add-to-cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, productId, quantity })
+        });
+      }
+      function removeFromCart(productId, userId) {
+        fetch('/remove-from-cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, productId })
+        });
+      }
+      function notifyQuantityChange(productId, qty) {
+        window.dispatchEvent(new CustomEvent('cartQuantityChanged', { detail: { productId, qty } }));
+        localStorage.setItem('cart_sync_event', `${productId}:${qty}:${Date.now()}`);
+      }
+      // Listen for changes from details page or other tabs
+      window.addEventListener('cartQuantityChanged', (e) => {
+        const productId = e.detail.productId;
+        // Find correct parent
+        const parent = document.querySelector(`.add-to-cart-btn[data-product-id="${productId}"]`)
+          ? document.querySelector(`.add-to-cart-btn[data-product-id="${productId}"]`).closest(".card-actions")
+          : document.querySelector(`.qty-btn.minus[data-product-id="${productId}"]`)
+            ? document.querySelector(`.qty-btn.minus[data-product-id="${productId}"]`).closest(".card-actions")
+            : null;
+        if (parent) {
+          if (e.detail.qty > 0) renderQuantityControls(parent, productId, e.detail.qty);
+          else renderAddToCart(parent, productId);
+        }
+      });
+      window.addEventListener('storage', e => {
+        if (e.key === 'cart_sync_event') {
+          const [changedId, qty] = e.newValue.split(':');
+          const parent = document.querySelector(`.add-to-cart-btn[data-product-id="${changedId}"]`)
+            ? document.querySelector(`.add-to-cart-btn[data-product-id="${changedId}"]`).closest(".card-actions")
+            : document.querySelector(`.qty-btn.minus[data-product-id="${changedId}"]`)
+              ? document.querySelector(`.qty-btn.minus[data-product-id="${changedId}"]`).closest(".card-actions")
+              : null;
+          if (parent) {
+            if (Number(qty) > 0) renderQuantityControls(parent, changedId, Number(qty));
+            else renderAddToCart(parent, changedId);
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
