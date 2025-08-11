@@ -32,7 +32,7 @@ app.post('/register', function(req, res) {
       res.status(500).send('Error inserting user');
       return;
     }
-    res.redirect('/welcome.html');
+    res.redirect('/login.html');
   });
 });
 
@@ -160,13 +160,13 @@ app.post('/add-to-cart', function(req, res) {
     return;
   }
 
-  // Handle quantity: default 1 if not sent, clamp minimum to 1 if not 0.
+  
   if (typeof quantity !== 'number' || isNaN(quantity)) {
     quantity = 1;
   }
   if (quantity < 0) quantity = 0;
 
-  // Does this item exist for this user already?
+  
   var findSql = 'SELECT id FROM cart_items WHERE user_id = ? AND product_id = ?';
   connection.query(findSql, [userId, productId], function(err, results) {
     if (err) {
@@ -174,7 +174,7 @@ app.post('/add-to-cart', function(req, res) {
       return;
     }
     if (results.length > 0) {
-      // If quantity is 0: remove from cart.
+      
       if (quantity === 0) {
         var deleteSql = 'DELETE FROM cart_items WHERE id = ?';
         connection.query(deleteSql, [results[0].id], function(err2) {
@@ -185,7 +185,7 @@ app.post('/add-to-cart', function(req, res) {
           res.json({ message: 'Removed from cart!' });
         });
       } else {
-        // Update to exact desired quantity
+        
         var updateSql = 'UPDATE cart_items SET quantity = ? WHERE id = ?';
         connection.query(updateSql, [quantity, results[0].id], function(err2) {
           if (err2) {
@@ -196,7 +196,7 @@ app.post('/add-to-cart', function(req, res) {
         });
       }
     } else {
-      // No row exists yet — insert new if quantity > 0
+      
       if (quantity > 0) {
         var insertSql = 'INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)';
         connection.query(insertSql, [userId, productId, quantity], function(err3) {
@@ -207,14 +207,14 @@ app.post('/add-to-cart', function(req, res) {
           res.json({ message: 'Added to cart!' });
         });
       } else {
-        // Trying to set to 0 but nothing in cart: ignore, success
+        
         res.json({ message: 'Nothing to remove.' });
       }
     }
   });
 });
 
-// Remove from cart endpoint, for explicit removals (optional, for UI "remove" button)
+
 app.post('/remove-from-cart', function(req, res) {
   var userId = req.body.userId;
   var productId = req.body.productId;
@@ -231,6 +231,32 @@ app.post('/remove-from-cart', function(req, res) {
     res.json({ message: 'Removed from cart!' });
   });
 });
+
+//Search products
+app.get('/search', function(req, res) {
+  const searchTerm = req.query.query;
+  if (!searchTerm) {
+    res.status(400).json({error: 'Missing search query'});
+    return;
+  }
+
+  const sql = "SELECT id FROM products WHERE name LIKE ? LIMIT 1";
+  const likeTerm = `%${searchTerm}%`;
+  connection.query(sql, [likeTerm], function(err, results) {
+    if (err) {
+      res.status(500).json({error: 'Database error during search'});
+      return;
+    }
+    if (results.length === 0) {
+      
+      res.status(404).json({message: 'No matching product found'});
+      return;
+    }
+    
+    res.json({ productId: results[0].id });
+  });
+});
+
 
 app.listen(3000, function() {
   console.log('Server running at http://localhost:3000');
