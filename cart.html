@@ -5,6 +5,7 @@
   <title>Your Cart & Total Bill</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    /* --- your styles exactly as before --- */
     body {
       font-family: 'Segoe UI', Arial, sans-serif; 
       background: linear-gradient(135deg, #f5f6fa 60%, #cff9e6 100%);
@@ -30,9 +31,7 @@
       font-weight: bold;
       text-align: center;
     }
-    .cart-list {
-      margin-bottom: 30px;
-    }
+    .cart-list { margin-bottom: 30px; }
     .cart-item {
       display: flex;
       align-items: center;
@@ -114,7 +113,7 @@
       text-align: right;
       margin-top: 14px;
     }
-    .to-home-btn {
+    .to-home-btn, .pay-btn {
       background:#1ee6c2;
       color:#fff;
       border:none;
@@ -128,7 +127,8 @@
       transition: background 0.14s;
       box-shadow: 0 5px 14px #b8f4e2c9;
     }
-    .to-home-btn:hover {
+    .to-home-btn:hover,
+    .pay-btn:hover {
       background: #0896d2;
       color: #fff;
     }
@@ -147,60 +147,73 @@
     <div class="cart-title">🛒 Your Shopping Cart</div>
     <div class="cart-list" id="cartList">Loading...</div>
     <div class="cart-total" id="cartTotal"></div>
-    <div class="cart-actions"><button class="to-home-btn" onclick="location.href='welcome.html'">&#8592; Continue Shopping</button></div>
+
+    <!-- Pay Now button -->
+    <div class="cart-actions" id="payNowContainer" style="display:none;">
+      <button class="pay-btn" onclick="location.href='payment.html'">💳 Pay Now</button>
+    </div>
+
+    <div class="cart-actions">
+      <button class="to-home-btn" onclick="location.href='welcome.html'">&#8592; Continue Shopping</button>
+    </div>
   </div>
-  <script>
-    // Cart utility (same as other pages)
-    const CART_KEY = "user_cart_quantities";
-    function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
 
-    // Main logic
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      alert("You must log in first to view your cart!");
-      window.location.href = "login.html";
-    } else {
-      const cartListElem = document.getElementById('cartList');
-      const cartTotalElem = document.getElementById('cartTotal');
-      const cart = getCartFromStorage();
-      const productIds = Object.keys(cart);
+<script>
+const userId = localStorage.getItem('userId');
+const CART_KEY = `user_cart_quantities_${userId}`;
+function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
 
-      if (productIds.length === 0) {
-        cartListElem.innerHTML = `<div class="cart-empty">Your cart is empty.</div>`;
-        cartTotalElem.textContent = '';
-      } else {
-        Promise.all(productIds.map(pid =>
-          fetch(`/product/${encodeURIComponent(pid)}`)
-            .then(res => res.ok ? res.json() : null)
-            .catch(() => null)
-        ))
-        .then(products => {
-          let total = 0;
-          cartListElem.innerHTML =
-            products.map((prod, idx) => {
-              const pid = productIds[idx];
-              const qty = cart[pid];
-              if (!prod) return '';
-              const subtotal = Number(prod.price) * qty;
-              total += subtotal;
-              return `<div class="cart-item">
-                ${prod.image_url ? `<img src="${prod.image_url}" class="cart-img" alt="${prod.name}">` : ''}
-                <div class="cart-main">
-                  <div class="cart-name">${prod.name || '(No name)'}</div>
-                  <div class="cart-price">Price: $${Number(prod.price).toFixed(2)}</div>
-                  <span class="cart-qty">Quantity: ${qty}</span>
-                </div>
-                <span class="cart-subtotal">$${subtotal.toFixed(2)}</span>
-              </div>`;
-            }).join('');
-          cartTotalElem.innerHTML = `Total Amount: $${total.toFixed(2)}`;
-        })
-        .catch(() => {
-          cartListElem.innerHTML = `<div class="cart-empty">Could not load cart.</div>`;
-          cartTotalElem.textContent = '';
-        });
+if (!userId) {
+  alert("You must log in first to view your cart!");
+  window.location.href = "login.html";
+} else {
+  const cartListElem = document.getElementById('cartList');
+  const cartTotalElem = document.getElementById('cartTotal');
+  const payNowContainer = document.getElementById('payNowContainer');
+  const cart = getCartFromStorage();
+  const productIds = Object.keys(cart);
+
+  if (productIds.length === 0) {
+    cartListElem.innerHTML = `<div class="cart-empty">Your cart is empty.</div>`;
+    cartTotalElem.textContent = '';
+    payNowContainer.style.display = 'none';
+  } else {
+    Promise.all(productIds.map(pid =>
+      fetch(`/product/${encodeURIComponent(pid)}`)
+        .then(res => res.ok ? res.json() : null)
+        .catch(() => null)
+    ))
+    .then(products => {
+      let total = 0;
+      cartListElem.innerHTML =
+        products.map((prod, idx) => {
+          const pid = productIds[idx];
+          const qty = cart[pid];
+          if (!prod) return '';
+          const subtotal = Number(prod.price) * qty;
+          total += subtotal;
+          return `<div class="cart-item">
+            ${prod.image_url ? `<img src="${prod.image_url}" class="cart-img" alt="${prod.name}">` : ''}
+            <div class="cart-main">
+              <div class="cart-name">${prod.name || '(No name)'}</div>
+              <div class="cart-price">Price: $${Number(prod.price).toFixed(2)}</div>
+              <span class="cart-qty">Quantity: ${qty}</span>
+            </div>
+            <span class="cart-subtotal">$${subtotal.toFixed(2)}</span>
+          </div>`;
+        }).join('');
+      cartTotalElem.innerHTML = `Total Amount: $${total.toFixed(2)}`;
+      if (total > 0) {
+        payNowContainer.style.display = 'block';
       }
-    }
-  </script>
+    })
+    .catch(() => {
+      cartListElem.innerHTML = `<div class="cart-empty">Could not load cart.</div>`;
+      cartTotalElem.textContent = '';
+      payNowContainer.style.display = 'none';
+    });
+  }
+}
+</script>
 </body>
 </html>
