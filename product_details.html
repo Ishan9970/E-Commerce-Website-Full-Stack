@@ -1,63 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Product Details</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f5f6fa; }
-    .container { max-width: 570px; margin: 60px auto; background: #fff; border-radius: 16px; padding: 30px 36px; box-shadow: 0 8px 28px #c0e8ef44; }
-    .name { font-size: 2rem; margin-bottom: 15px; }
-    .desc { font-size: 1.15rem; margin-bottom: 25px; }
-    .price { font-size: 1.4rem; color: #22865e; margin-bottom: 22px; font-weight: 600; }
-    .img { max-width: 310px; width: 100%; border-radius: 14px; margin-bottom: 20px; }
-    .qty-btn { border: none; outline: 0; padding: 12px; color: white; text-align: center; cursor: pointer; font-size: 18px; border-radius: 8px; margin:4px 3px; width:40px;}
-    .qty-btn.plus { background:#1ee6c2;}
-    .qty-btn.minus { background:#0896d2;}
-    .card-qty-ui { display:inline-flex; align-items:center; justify-content:center;}
-    .cart-qty-value { display:inline-block; min-width:24px; font-weight: bold; color:#0896d2; background-color:#f5f9fa; border-radius:7px; font-size:18px;}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+    }
+
+    .container {
+      max-width: 570px;
+      margin: 60px auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 30px 36px;
+      box-shadow: 0 8px 28px #c0e8ef44;
+    }
+
+    .name {
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+
+    .desc {
+      font-size: 1.15rem;
+      margin-bottom: 25px;
+    }
+
+    .price {
+      font-size: 1.4rem;
+      color: #22865e;
+      margin-bottom: 22px;
+      font-weight: 600;
+    }
+
+    .img {
+      max-width: 310px;
+      width: 100%;
+      border-radius: 14px;
+      margin-bottom: 20px;
+    }
+
+    .qty-btn {
+      border: none;
+      outline: 0;
+      padding: 12px;
+      color: white;
+      text-align: center;
+      cursor: pointer;
+      font-size: 18px;
+      border-radius: 8px;
+      margin: 4px 3px;
+      width: 85px;
+    }
+
+    .qty-btn.plus {
+      background: #1ee6c2;
+    }
+
+    .qty-btn.minus {
+      background: #0896d2;
+    }
+
+    .card-qty-ui {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-qty-value {
+      display: inline-block;
+      min-width: 24px;
+      font-weight: bold;
+      color: #0896d2;
+      background-color: #f5f9fa;
+      border-radius: 7px;
+      font-size: 25px;
+      padding: 0 10px;
+    }
   </style>
 </head>
+
 <body>
   <div class="container" id="productDetail"></div>
   <script>
-    // ==== SHARED CART UTILITY ====
-    const CART_KEY = "user_cart_quantities";
+    const userId = localStorage.getItem('userId');
+    const CART_KEY = `user_cart_quantities_${userId}`;
     function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
     function setCartToStorage(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-    function setProductQty(productId, qty) { const cart = getCartFromStorage(); if (qty > 0) cart[productId]=qty; else delete cart[productId]; setCartToStorage(cart);}
-    function getProductQty(productId) { const cart=getCartFromStorage(); return cart[productId]||0;}
+    function setProductQty(pid, qty) { const cart = getCartFromStorage(); if (qty > 0) cart[pid] = qty; else delete cart[pid]; setCartToStorage(cart); }
+    function getProductQty(pid) { const cart = getCartFromStorage(); return cart[pid] || 0; }
+
 
     const params = new URLSearchParams(window.location.search);
     const pid = params.get('id');
     const detailDiv = document.getElementById('productDetail');
 
-    if (!pid) {
-      detailDiv.textContent = "No product selected.";
-    } else {
+    if (!pid) { detailDiv.textContent = "No product selected."; }
+    else {
       fetch(`/product/${encodeURIComponent(pid)}`)
-        .then(res => {
-          if (!res.ok) throw new Error("not found");
-          return res.json();
-        })
+        .then(res => { if (!res.ok) throw new Error("not found"); return res.json(); })
         .then(product => {
           function renderDetailPage(quantity) {
             detailDiv.innerHTML = `
-              ${product.image_url ? `<img class="img" src="${product.image_url}" alt="${product.name}">` : ''}
-              <div class="name">${product.name}</div>
-              <div class="desc">${product.description || "No description available."}</div>
-              <div class="price">$${Number(product.price).toFixed(2)}</div>
-              <div class="detail-actions"></div>
-            `;
+            ${product.image_url ? `<img class="img" src="${product.image_url}" alt="${product.name}">` : ''}
+            <div class="name">${product.name}</div>
+            <div class="desc">${product.description || "No description available."}</div>
+            <div class="price">$${Number(product.price).toFixed(2)}</div>
+            <div class="detail-actions"></div>
+          `;
             const actionsDiv = detailDiv.querySelector('.detail-actions');
-            if (quantity > 0) {
-              renderQuantitySelector(actionsDiv, pid, quantity);
-            } else {
-              renderAddBtn(actionsDiv, pid);
-            }
+            if (quantity > 0) renderQuantitySelector(actionsDiv, pid, quantity);
+            else renderAddBtn(actionsDiv, pid);
           }
           function renderAddBtn(parent, productId) {
             parent.innerHTML = `<button id="addToCartBtn" style="padding:12px 30px;font-size:1.08rem;background:#22865e;color:#fff;border:none;border-radius:7px;cursor:pointer;margin-top:10px;">Add to Cart</button>`;
-            parent.querySelector("#addToCartBtn").onclick = function() {
+            parent.querySelector("#addToCartBtn").onclick = function () {
               setProductQty(productId, 1);
               renderQuantitySelector(parent, productId, 1);
               addOrUpdateCart(productId, 1);
@@ -66,12 +126,12 @@
           }
           function renderQuantitySelector(parent, productId, quantity) {
             parent.innerHTML = `
-              <span class="card-qty-ui">
-                <button type="button" class="qty-btn minus" data-product-id="${productId}">-</button>
-                <span class="cart-qty-value">${quantity}</span>
-                <button type="button" class="qty-btn plus" data-product-id="${productId}">+</button>
-              </span>
-            `;
+            <span class="card-qty-ui">
+              <button type="button" class="qty-btn minus" data-product-id="${productId}">-</button>
+              <span class="cart-qty-value">${quantity}</span>
+              <button type="button" class="qty-btn plus" data-product-id="${productId}">+</button>
+            </span>
+          `;
             parent.querySelector(".minus").onclick = function () {
               let qty = getProductQty(productId) || 1;
               if (qty > 1) {
@@ -97,7 +157,6 @@
             };
           }
           function addOrUpdateCart(productId, quantity) {
-            const userId = localStorage.getItem('userId');
             if (!userId) { alert("You must log in first to add to cart!"); window.location.href = "login.html"; return; }
             fetch('/add-to-cart', {
               method: 'POST',
@@ -106,7 +165,6 @@
             });
           }
           function removeFromCart(productId) {
-            const userId = localStorage.getItem('userId');
             if (!userId) return;
             fetch('/remove-from-cart', {
               method: 'POST',
@@ -119,20 +177,11 @@
             localStorage.setItem('cart_sync_event', `${productId}:${qty}:${Date.now()}`);
           }
           renderDetailPage(getProductQty(pid) || 0);
-          window.addEventListener('cartQuantityChanged', (e) => {
-            if (e.detail.productId + "" === pid + "") renderDetailPage(e.detail.qty);
-          });
-          window.addEventListener('storage', e => {
-            if (e.key === 'cart_sync_event') {
-              const [changedId, qty] = e.newValue.split(':');
-              if (changedId + "" === pid + "") renderDetailPage(Number(qty));
-            }
-          });
         })
-        .catch(() => {
-          detailDiv.textContent = "Product not found.";
-        });
+        .catch(() => { detailDiv.textContent = "Product not found."; });
     }
   </script>
+
 </body>
+
 </html>

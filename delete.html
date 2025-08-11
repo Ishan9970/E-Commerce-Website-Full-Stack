@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Delete Employee</title>
+</head>
+<body>
+  <form id="deleteForm" style="display: flex; justify-content: center; margin-top: 20px;">
+    <input type="text" id="empNameToDelete" placeholder="Enter employee name to delete" required
+           style="height: 30px; font-size: 14px; padding: 0 10px; width: 300px;" />
+    <input type="submit" value="Delete Employee" 
+           style="height: 35px; font-size: 14px; cursor: pointer; margin-left: 8px; background-color: red; color: white; border-radius: 8px; border: 1px solid #ccc;" />
+  </form>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const empName = document.getElementById('empNameToDelete').value.trim();
+      if (!empName) {
+        alert('Please enter employee name');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete details for ${empName}?`)) {
+        return;
+      }
+
+      fetch('/delete-employee', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: empName })
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            alert('Employee deleted successfully.');
+            // Optionally, clear input field or reload/redirect
+            document.getElementById('empNameToDelete').value = '';
+          } else {
+            alert(result.message || 'Employee not found or could not be deleted.');
+          }
+        })
+        .catch(() => {
+          alert('Error deleting employee.');
+        });
+    });
+  </script>
+</body>
+</html>
