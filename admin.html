@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard - Add New Item</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #1ee6c2;
+    padding: 15px;
+    color: white;
+    font-size: 1.4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header button {
+    background: #fff;
+    color: #1ee6c2;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    width: auto;
+    min-width: 0;
+    height: 35px;
+    line-height: 20px;
+    margin-left: 8px;
+  }
+  header button:hover {
+    background: #d6f8f2;
+  }
+  .container {
+    max-width: 510px;
+    margin: 40px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
+  }
+  h2 {
+    text-align: center;
+    color: #15846a;
+    margin-bottom: 20px;
+  }
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  button[type="submit"] {
+    background: #1ee6c2;
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  button[type="submit"]:hover {
+    background: #0896d2;
+  }
+  .message {
+    margin-top: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .success { color: green; }
+  .error { color: red; }
+  .preview-img {
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 4px;
+    border: 1px solid #e2e2e2;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span>Admin Dashboard</span>
+  <button onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+  <h2>Add New Product</h2>
+  <div id="msg" class="message"></div>
+  
+  <form id="addProductForm" enctype="multipart/form-data">
+    <label>Product Name</label>
+    <input type="text" id="name" placeholder="Enter product name" required>
+
+    <label>Price ($)</label>
+    <input type="number" id="price" placeholder="Enter price" required step="0.01" min="0.01">
+
+    <label>Description</label>
+    <textarea id="description" placeholder="Enter product description"></textarea>
+
+    <label>Image Upload</label>
+    <input type="file" id="image_file" accept="image/*" required>
+    <img id="preview" class="preview-img" style="display:none;" />
+
+    <button type="submit">Add Product</button>
+  </form>
+</div>
+
+<script>
+
+  const role = localStorage.getItem('role');
+  if (role !== 'admin') {
+    alert("Access denied. Admins only!");
+    window.location.href = 'login.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('role');
+    window.location.href = 'login.html';
+  }
+
+
+  document.getElementById('image_file').addEventListener('change', function(e) {
+    const preview = document.getElementById('preview');
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        preview.style.display = "block";
+        preview.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      preview.style.display = "none";
+      preview.src = '';
+    }
+  });
+
+  document.getElementById('addProductForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    msg.textContent = '';
+    msg.className = 'message';
+
+    const name = document.getElementById('name').value.trim();
+    const price = parseFloat(document.getElementById('price').value);
+    const description = document.getElementById('description').value.trim();
+    const fileInput = document.getElementById('image_file');
+    const imageFile = fileInput.files[0];
+
+    if (!name || !price || !imageFile) {
+      msg.textContent = 'Name, Price, and Image are required';
+      msg.classList.add('error');
+      return;
+    }
+
+   
+    let imageUrl = null;
+    const formData = new FormData();
+    formData.append('file', imageFile);
+
+    try {
+      const uploadRes = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadRes.ok && uploadData.success && uploadData.imageUrl) {
+        imageUrl = uploadData.imageUrl;
+      } else {
+        throw new Error(uploadData.message || "Image upload failed.");
+      }
+    } catch (err) {
+      msg.textContent = "Error uploading image: " + err.message;
+      msg.classList.add('error');
+      return;
+    }
+
+    
+    try {
+      const res = await fetch('/api/request', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          price,
+          description,
+          image_url: imageUrl 
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        msg.textContent = 'Product added successfully!';
+        msg.classList.add('success');
+        document.getElementById('addProductForm').reset();
+        document.getElementById('preview').style.display = 'none';
+      } else {
+        msg.textContent = data.message || 'Failed to add product.';
+        msg.classList.add('error');
+      }
+    } catch (err) {
+      msg.textContent = 'Error connecting to server.';
+      msg.classList.add('error');
+    }
+  };
+</script>
+
+</body>
+</html>

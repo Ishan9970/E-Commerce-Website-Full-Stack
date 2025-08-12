@@ -4,32 +4,108 @@
   <title>Login - Website</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 0; }
-    .container { text-align: center; margin-top: 100px; }
-    h1 { color: blue; margin-bottom: 1rem; }
-    .login-box { border: 1px solid #ccc; border-radius: 10px; padding: 30px 25px; width: 350px; margin: 0 auto; background: #fff; }
-    h2 { margin-bottom: 1rem; }
-    input[type="text"], input[type="password"] { height: 30px; border-radius: 8px; border: 1px solid #ccc; width: 90%; padding-left: 8px; margin-bottom: 15px; font-size: 1rem; }
-    input[type="submit"], input[type="button"] { border-radius: 8px; border: 1px solid #ccc; width: 250px; height: 35px; font-size: 1rem; cursor: pointer; }
-    input[type="submit"] { background-color: lightblue; }
-    input[type="button"] { background-color: green; color: white; width: 200px; margin-top: 15px; }
-    input[type="submit"]:hover { background-color: #5bc0de; }
-    input[type="button"]:hover { background-color: #198754; }
-    a { color: blue; text-decoration: none; display: block; margin-top: 15px; }
-    .error-msg { color: red; margin-bottom: 10px; height: 18px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      text-align: center;
+      margin-top: 100px;
+    }
+    h1 {
+      color: blue;
+      margin-bottom: 1rem;
+    }
+    .login-box {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 30px 25px;
+      width: 350px;
+      margin: 0 auto;
+      background: #fff;
+    }
+    h2 {
+      margin-bottom: 1rem;
+    }
+    input[type="text"],
+    input[type="password"] {
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 90%;
+      padding-left: 8px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+    }
+    input[type="submit"],
+    input[type="button"] {
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 250px;
+      height: 35px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    input[type="submit"] {
+      background-color: lightblue;
+    }
+    input[type="button"] {
+      background-color: green;
+      color: white;
+      width: 200px;
+      margin-top: 15px;
+    }
+    input[type="submit"]:hover {
+      background-color: #5bc0de;
+    }
+    input[type="button"]:hover {
+      background-color: #198754;
+    }
+    a {
+      color: blue;
+      text-decoration: none;
+      display: block;
+      margin-top: 15px;
+    }
+    .error-msg {
+      color: red;
+      margin-bottom: 10px;
+      height: 18px;
+    }
+    .role-select {
+      margin-bottom: 15px;
+      text-align: left;
+      padding-left: 10px;
+    }
+    .role-select label {
+      margin-right: 15px;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Website</h1>
     <div class="login-box">
       <h2>Log in to website</h2>
       <div class="error-msg" id="errorMsg"></div>
+
       <form id="loginForm">
+        
+        <div class="role-select">
+          <label><input type="radio" name="role" value="user" checked> Log in as User</label>
+          <label><input type="radio" name="role" value="admin"> Log in as Admin</label>
+        </div>
+
         <input type="text" id="email" placeholder="Email address" required><br>
         <input type="password" id="password" placeholder="Password" required><br><br>
+
         <input type="submit" value="Log In"><br><br>
       </form>
+
       <a href="reset.html">Forgotten Password?</a>
       <hr>
       <input type="button" value="Create Account" onclick="window.location.href='sign.html'">
@@ -37,11 +113,12 @@
   </div>
 
   <script>
-    document.getElementById('loginForm').onsubmit = function(e) {
+    document.getElementById('loginForm').onsubmit = function (e) {
       e.preventDefault();
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
+      const role = document.querySelector('input[name="role"]:checked').value;
       const errorMsg = document.getElementById('errorMsg');
       errorMsg.textContent = '';
 
@@ -50,16 +127,25 @@
         return;
       }
 
-      fetch('/login', {    // MUST match your app.js route!
+      
+      fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, role })
       })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          localStorage.setItem('userId', data.id);   // <- THIS IS CRITICAL!
-          window.location.href = 'welcome.html';
+          
+          localStorage.setItem('userId', data.id);
+          localStorage.setItem('role', role);
+
+          
+          if (role === 'admin') {
+            window.location.href = 'admin.html'; 
+          } else {
+            window.location.href = 'welcome.html'; 
+          }
         } else {
           errorMsg.textContent = data.message || 'Login failed.';
         }
