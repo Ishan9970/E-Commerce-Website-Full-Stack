@@ -1,263 +1,255 @@
 const express = require('express');
 const mysql = require('mysql2');
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (including uploaded images) from app root
 app.use(express.static(__dirname));
 
+// MySQL connection
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'root',
-  database: 'user_db'
+    host: 'localhost',
+    user: 'root',
+    password: 'root', // your MySQL password
+    database: 'user_db'
 });
 
-// Registration
-app.post('/register', function(req, res) {
-  var first_name = req.body.first_name;
-  var last_name = req.body.last_name;
-  var email = req.body.email;
-  var password = req.body.password;
-  if (!first_name || !last_name || !email || !password) {
-    res.status(400).json({ message: 'Missing required fields' });
-    return;
-  }
-  var sql = 'INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)';
-  var values = [first_name, last_name, email, password];
-  connection.query(sql, values, function(err, results) {
-    if (err) {
-      res.status(500).send('Error inserting user');
-      return;
+// ===== Multer config: save files in application root =====
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, __dirname); // save in root folder
+    },
+    filename: function (req, file, cb) {
+        const uniqueName = 'img-' + Date.now() + path.extname(file.originalname);
+        cb(null, uniqueName);
     }
-    res.redirect('/login.html');
-  });
+});
+const upload = multer({ storage: storage });
+
+/* ================= REGISTER ================= */
+app.post('/register', function (req, res) {
+    const { first_name, last_name, email, password } = req.body;
+    if (!first_name || !last_name || !email || !password) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+    const sql = 'INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)';
+    connection.query(sql, [first_name, last_name, email, password], function (err) {
+        if (err) return res.status(500).send('Error inserting user');
+        res.redirect('/login.html');
+    });
 });
 
-// Login
-app.post('/login', function(req, res) {
-  var email = req.body.email;
-  var password = req.body.password;
-  if (!email || !password) {
-    res.status(400).json({ success: false, message: 'Missing email or password' });
-    return;
-  }
-  var sql = 'SELECT id, password_hash FROM users WHERE email = ?';
-  connection.query(sql, [email], function(err, results) {
-    if (err) {
-      res.status(500).json({ success: false, message: 'Database error' });
-      return;
+/* ================= LOGIN (User or Admin) ================= */
+app.post('/login', function (req, res) {
+    const { email, password, role } = req.body;
+    if (!email || !password || !role) {
+        return res.status(400).json({ success: false, message: 'Missing email, password, or role' });
     }
-    if (results.length === 0) {
-      res.status(401).json({ success: false, message: 'Invalid email or password' });
-      return;
-    }
-    var user = results[0];
-    if (user.password_hash === password) {
-      res.json({ success: true, message: 'Login successful!', id: user.id });
+
+    if (role === 'admin') {
+        const sql = 'SELECT id, password_hash FROM admins WHERE email = ?';
+        connection.query(sql, [email], function (err, results) {
+            if (err) return res.status(500).json({ success: false, message: 'Database error' });
+            if (results.length === 0) {
+                return res.status(403).json({ success: false, message: 'Log in as user, you are not admin.' });
+            }
+            const admin = results[0];
+            if (admin.password_hash === password) {
+                return res.json({ success: true, message: 'Admin login successful!', id: admin.id });
+            } else {
+                return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            }
+        });
     } else {
-      res.status(401).json({ success: false, message: 'Invalid email or password' });
-    }
-  });
-});
-
-// Fetch user profile
-app.get('/user/:id', function(req, res) {
-  var userId = req.params.id;
-  var sql = 'SELECT id, first_name, last_name, email FROM users WHERE id = ?';
-  connection.query(sql, [userId], function(err, results) {
-    if (err) {
-      res.status(500).json({ error: 'Database error' });
-      return;
-    }
-    if (results.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
-    res.json(results[0]);
-  });
-});
-
-// Update profile
-app.post('/update-profile', function(req, res) {
-  var id = req.body.id;
-  var first_name = req.body.first_name;
-  var last_name = req.body.last_name;
-  var email = req.body.email;
-  var password = req.body.password;
-  if (!id || !first_name || !last_name || !email || !password) {
-    res.status(400).json({ message: 'Missing required fields' });
-    return;
-  }
-  var sql = 'UPDATE users SET first_name = ?, last_name = ?, email = ?, password_hash = ? WHERE id = ?';
-  var values = [first_name, last_name, email, password, id];
-  connection.query(sql, values, function(err, result) {
-    if (err) {
-      res.status(500).json({ message: 'Database error when updating profile' });
-      return;
-    }
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: 'User not found' });
-      return;
-    }
-    res.send(`
-      <script>
-        alert('Profile updated successfully!');
-        window.location.href = 'welcome.html';
-      </script>
-    `);
-  });
-});
-
-// Delete user
-app.delete('/delete-myself', function(req, res) {
-  var id = req.body.id;
-  if (!id) {
-    res.status(400).json({ success: false, message: 'Missing user id' });
-    return;
-  }
-  var sql = 'DELETE FROM users WHERE id = ?';
-  connection.query(sql, [id], function(err, result) {
-    if (err) {
-      res.status(500).json({ success: false, message: 'Database error when deleting user.' });
-      return;
-    }
-    if (result.affectedRows === 0) {
-      res.status(404).json({ success: false, message: 'User not found.' });
-      return;
-    }
-    res.json({ success: true });
-  });
-});
-
-// Product details
-app.get('/product/:id', function(req, res) {
-  var productId = req.params.id;
-  var sql = 'SELECT id, name, price, description FROM products WHERE id = ?';
-  connection.query(sql, [productId], function(err, results) {
-    if (err) {
-      res.status(500).json({ error: 'Database error' });
-      return;
-    }
-    if (results.length === 0) {
-      res.status(404).json({ error: 'Product not found' });
-      return;
-    }
-    res.json(results[0]);
-  });
-});
-
-
-app.post('/add-to-cart', function(req, res) {
-  var userId = req.body.userId;
-  var productId = req.body.productId;
-  var quantity = Number(req.body.quantity);
-
-  if (!userId || !productId) {
-    res.status(400).json({ error: 'Missing userId or productId' });
-    return;
-  }
-
-  
-  if (typeof quantity !== 'number' || isNaN(quantity)) {
-    quantity = 1;
-  }
-  if (quantity < 0) quantity = 0;
-
-  
-  var findSql = 'SELECT id FROM cart_items WHERE user_id = ? AND product_id = ?';
-  connection.query(findSql, [userId, productId], function(err, results) {
-    if (err) {
-      res.status(500).json({ error: 'Database error (find existing cart)' });
-      return;
-    }
-    if (results.length > 0) {
-      
-      if (quantity === 0) {
-        var deleteSql = 'DELETE FROM cart_items WHERE id = ?';
-        connection.query(deleteSql, [results[0].id], function(err2) {
-          if (err2) {
-            res.status(500).json({ error: 'Database error (delete cart item)' });
-            return;
-          }
-          res.json({ message: 'Removed from cart!' });
+        const sql = 'SELECT id, password_hash FROM users WHERE email = ?';
+        connection.query(sql, [email], function (err, results) {
+            if (err) return res.status(500).json({ success: false, message: 'Database error' });
+            if (results.length === 0) {
+                return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            }
+            const user = results[0];
+            if (user.password_hash === password) {
+                return res.json({ success: true, message: 'Login successful!', id: user.id });
+            } else {
+                return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            }
         });
-      } else {
-        
-        var updateSql = 'UPDATE cart_items SET quantity = ? WHERE id = ?';
-        connection.query(updateSql, [quantity, results[0].id], function(err2) {
-          if (err2) {
-            res.status(500).json({ error: 'Database error (update cart item)' });
-            return;
-          }
-          res.json({ message: 'Cart updated!' });
-        });
-      }
-    } else {
-      
-      if (quantity > 0) {
-        var insertSql = 'INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)';
-        connection.query(insertSql, [userId, productId, quantity], function(err3) {
-          if (err3) {
-            res.status(500).json({ error: 'Database error (insert cart item)' });
-            return;
-          }
-          res.json({ message: 'Added to cart!' });
-        });
-      } else {
-        
-        res.json({ message: 'Nothing to remove.' });
-      }
     }
-  });
 });
 
-
-app.post('/remove-from-cart', function(req, res) {
-  var userId = req.body.userId;
-  var productId = req.body.productId;
-  if (!userId || !productId) {
-    res.status(400).json({ error: 'Missing userId or productId' });
-    return;
-  }
-  var deleteSql = 'DELETE FROM cart_items WHERE user_id = ? AND product_id = ?';
-  connection.query(deleteSql, [userId, productId], function(err, result) {
-    if (err) {
-      res.status(500).json({ error: 'Database error (remove from cart)' });
-      return;
-    }
-    res.json({ message: 'Removed from cart!' });
-  });
+/* ================= FETCH USER PROFILE ================= */
+app.get('/user/:id', function (req, res) {
+    const userId = req.params.id;
+    const sql = 'SELECT id, first_name, last_name, email FROM users WHERE id = ?';
+    connection.query(sql, [userId], function (err, results) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (results.length === 0) return res.status(404).json({ error: 'User not found' });
+        res.json(results[0]);
+    });
 });
 
-//Search products
-app.get('/search', function(req, res) {
-  const searchTerm = req.query.query;
-  if (!searchTerm) {
-    res.status(400).json({error: 'Missing search query'});
-    return;
-  }
-
-  const sql = "SELECT id FROM products WHERE name LIKE ? LIMIT 1";
-  const likeTerm = `%${searchTerm}%`;
-  connection.query(sql, [likeTerm], function(err, results) {
-    if (err) {
-      res.status(500).json({error: 'Database error during search'});
-      return;
+/* ================= UPDATE PROFILE ================= */
+app.post('/update-profile', function (req, res) {
+    const { id, first_name, last_name, email, password } = req.body;
+    if (!id || !first_name || !last_name || !email || !password) {
+        return res.status(400).json({ message: 'Missing required fields' });
     }
-    if (results.length === 0) {
-      
-      res.status(404).json({message: 'No matching product found'});
-      return;
-    }
-    
-    res.json({ productId: results[0].id });
-  });
+    const sql = 'UPDATE users SET first_name = ?, last_name = ?, email = ?, password_hash = ? WHERE id = ?';
+    connection.query(sql, [first_name, last_name, email, password, id], function (err, result) {
+        if (err) return res.status(500).json({ message: 'Database error when updating profile' });
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found' });
+        res.send(`
+          <script>
+            alert('Profile updated successfully!');
+            window.location.href = 'welcome.html';
+          </script>
+        `);
+    });
 });
 
+/* ================= DELETE USER ================= */
+app.delete('/delete-myself', function (req, res) {
+    const id = req.body.id;
+    if (!id) return res.status(400).json({ success: false, message: 'Missing user id' });
+    const sql = 'DELETE FROM users WHERE id = ?';
+    connection.query(sql, [id], function (err, result) {
+        if (err) return res.status(500).json({ success: false, message: 'Database error when deleting user.' });
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'User not found.' });
+        res.json({ success: true });
+    });
+});
 
-app.listen(3000, function() {
-  console.log('Server running at http://localhost:3000');
+/* ================= GET SINGLE PRODUCT ================= */
+app.get('/product/:id', function (req, res) {
+    const productId = req.params.id;
+    const sql = 'SELECT id, name, price, description, image_url FROM products WHERE id = ?';
+    connection.query(sql, [productId], function (err, results) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (results.length === 0) return res.status(404).json({ error: 'Product not found' });
+        res.json(results[0]);
+    });
+});
+
+/* ================= GET ALL PRODUCTS (for welcome.html) ================= */
+app.get('/api/products', (req, res) => {
+    connection.query('SELECT * FROM products', (err, results) => {
+        if (err) return res.status(500).json({ success: false, message: 'Database error' });
+        res.json(results);
+    });
+});
+
+/* ================= CART ================= */
+app.post('/add-to-cart', function (req, res) {
+    const { userId, productId } = req.body;
+    let quantity = Number(req.body.quantity);
+    if (!userId || !productId) return res.status(400).json({ error: 'Missing userId or productId' });
+    if (isNaN(quantity) || quantity < 0) quantity = 1;
+
+    const findSql = 'SELECT id FROM cart_items WHERE user_id = ? AND product_id = ?';
+    connection.query(findSql, [userId, productId], function (err, results) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (results.length > 0) {
+            if (quantity === 0) {
+                connection.query('DELETE FROM cart_items WHERE id = ?', [results[0].id], () => res.json({ message: 'Removed from cart!' }));
+            } else {
+                connection.query('UPDATE cart_items SET quantity = ? WHERE id = ?', [quantity, results[0].id], () => res.json({ message: 'Cart updated!' }));
+            }
+        } else {
+            if (quantity > 0) {
+                connection.query('INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)', [userId, productId, quantity], () => res.json({ message: 'Added to cart!' }));
+            } else {
+                res.json({ message: 'Nothing to remove.' });
+            }
+        }
+    });
+});
+
+app.post('/remove-from-cart', function (req, res) {
+    const { userId, productId } = req.body;
+    if (!userId || !productId) return res.status(400).json({ error: 'Missing userId or productId' });
+    connection.query('DELETE FROM cart_items WHERE user_id = ? AND product_id = ?', [userId, productId], () => res.json({ message: 'Removed from cart!' }));
+});
+
+/* ================= SEARCH ================= */
+app.get('/search', function (req, res) {
+    const searchTerm = req.query.query;
+    if (!searchTerm) return res.status(400).json({ error: 'Missing search query' });
+    const sql = "SELECT id FROM products WHERE name LIKE ? LIMIT 1";
+    connection.query(sql, [`%${searchTerm}%`], function (err, results) {
+        if (err) return res.status(500).json({ error: 'Database error during search' });
+        if (results.length === 0) return res.status(404).json({ message: 'No matching product found' });
+        res.json({ productId: results[0].id });
+    });
+});
+
+/* ================= PAYMENT ================= */
+app.post('/api/pay', function (req, res) {
+    const { payment_mode, amount, userId } = req.body;
+    if (!payment_mode || !amount || !userId) {
+        return res.status(400).json({ success: false, message: 'Missing payment details or userId' });
+    }
+    function generateGatewayTransactionId() {
+        const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+        return `GTID_${Date.now()}_${randomPart}`;
+    }
+    const gatewayTransactionId = generateGatewayTransactionId();
+
+    const cartSql = 'SELECT product_id, quantity FROM cart_items WHERE user_id = ?';
+    connection.query(cartSql, [userId], function (err, cartItems) {
+        if (err) return res.status(500).json({ success: false, message: 'Database error fetching cart' });
+        if (cartItems.length === 0) return res.status(400).json({ success: false, message: 'Cart is empty' });
+
+        const products = cartItems.map(i => i.product_id).join(',');
+        const quantities = cartItems.map(i => i.quantity).join(',');
+
+        connection.query(
+            'INSERT INTO transactions (user_id, products, quantities, payment_mode, gateway_transaction_id) VALUES (?, ?, ?, ?, ?)',
+            [userId, products, quantities, payment_mode, gatewayTransactionId],
+            function (err2) {
+                if (err2) return res.status(500).json({ success: false, message: 'Error saving transaction' });
+                connection.query('DELETE FROM cart_items WHERE user_id = ?', [userId], function (err3) {
+                    if (err3) return res.status(500).json({ success: false, message: 'Error clearing cart' });
+                    res.json({ success: true, gateway_transaction_id: gatewayTransactionId });
+                });
+            }
+        );
+    });
+});
+
+/* ================= IMAGE UPLOAD ================= */
+app.post('/api/upload-image', upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    const imageUrl = `/${req.file.filename}`; // URL for static serving
+    res.json({ success: true, imageUrl: imageUrl });
+});
+
+/* ================= ADD PRODUCT ================= */
+app.post('/api/request', (req, res) => {
+    const { name, price, description, image_url } = req.body;
+    if (!name || !price || !image_url) {
+        return res.status(400).json({ success: false, message: 'Name, price, and image URL are required' });
+    }
+    connection.query(
+        `INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)`,
+        [name, price, description || '', image_url],
+        (err, result) => {
+            if (err) {
+                console.error('Error inserting product:', err);
+                return res.status(500).json({ success: false, message: 'Database error while adding product' });
+            }
+            res.json({ success: true, message: 'Product added successfully', productId: result.insertId });
+        }
+    );
+});
+
+app.listen(3000, function () {
+    console.log('Server running at http://localhost:3000');
 });
