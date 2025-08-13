@@ -128,7 +128,7 @@ app.delete('/delete-myself', function (req, res) {
 /* ================= GET SINGLE PRODUCT ================= */
 app.get('/product/:id', function (req, res) {
     const productId = req.params.id;
-    const sql = 'SELECT id, name, price, description, image_url FROM products WHERE id = ?';
+    const sql = 'SELECT id, name, price, description, image_url, category FROM products WHERE id = ?';
     connection.query(sql, [productId], function (err, results) {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (results.length === 0) return res.status(404).json({ error: 'Product not found' });
@@ -136,10 +136,36 @@ app.get('/product/:id', function (req, res) {
     });
 });
 
-/* ================= GET ALL PRODUCTS (for welcome.html) ================= */
+/* ================= GET ALL PRODUCTS ================= */
 app.get('/api/products', (req, res) => {
     connection.query('SELECT * FROM products', (err, results) => {
         if (err) return res.status(500).json({ success: false, message: 'Database error' });
+        res.json(results);
+    });
+});
+
+/* ================= GET DISTINCT CATEGORIES  ================= */
+app.get('/api/categories', (req, res) => {
+    connection.query('SELECT DISTINCT category FROM products', (err, results) => {
+        if (err) return res.status(500).json({ success: false });
+        const categories = results.map(r => r.category);
+        res.json(categories);
+    });
+});
+
+/* ================= GET PRODUCTS BY CATEGORY  ================= */
+app.get('/api/products-by-category', (req, res) => {
+    const category = req.query.category;
+    let sql, params;
+    if (!category || category.toLowerCase() === 'all') {
+        sql = 'SELECT * FROM products';
+        params = [];
+    } else {
+        sql = 'SELECT * FROM products WHERE category = ?';
+        params = [category];
+    }
+    connection.query(sql, params, (err, results) => {
+        if (err) return res.status(500).json({ success: false });
         res.json(results);
     });
 });
@@ -233,13 +259,13 @@ app.post('/api/upload-image', upload.single('file'), (req, res) => {
 
 /* ================= ADD PRODUCT ================= */
 app.post('/api/request', (req, res) => {
-    const { name, price, description, image_url } = req.body;
-    if (!name || !price || !image_url) {
-        return res.status(400).json({ success: false, message: 'Name, price, and image URL are required' });
+    const { name, price, description, image_url, category } = req.body;
+    if (!name || !price || !image_url || !category) {
+        return res.status(400).json({ success: false, message: 'Name, price, image URL, and category are required' });
     }
     connection.query(
-        `INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)`,
-        [name, price, description || '', image_url],
+        `INSERT INTO products (name, price, description, image_url, category) VALUES (?, ?, ?, ?, ?)`,
+        [name, price, description || '', image_url, category],
         (err, result) => {
             if (err) {
                 console.error('Error inserting product:', err);
@@ -248,6 +274,58 @@ app.post('/api/request', (req, res) => {
             res.json({ success: true, message: 'Product added successfully', productId: result.insertId });
         }
     );
+});
+
+/* ================= UPDATE PRODUCT ================= */
+app.post('/api/update-product', (req, res) => {
+    const { id, name, price, description, category } = req.body;
+    if (!id || !name || !price) {
+        return res.status(400).json({ success: false, message: 'Missing id, name or price' });
+    }
+    // If description or category is undefined, keep the old value
+    let sql, params;
+    if (typeof description !== "undefined" && typeof category !== "undefined") {
+        sql = 'UPDATE products SET name = ?, price = ?, description = ?, category = ? WHERE id = ?';
+        params = [name, price, description, category, id];
+    } else if (typeof description !== "undefined") {
+        sql = 'UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?';
+        params = [name, price, description, id];
+    } else if (typeof category !== "undefined") {
+        sql = 'UPDATE products SET name = ?, price = ?, category = ? WHERE id = ?';
+        params = [name, price, category, id];
+    } else {
+        sql = 'UPDATE products SET name = ?, price = ? WHERE id = ?';
+        params = [name, price, id];
+    }
+    connection.query(sql, params, (err, result) => {
+        if (err) {
+            console.error('Error updating product:', err);
+            return res.status(500).json({ success: false, message: 'Database error while updating product' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+        res.json({ success: true, message: 'Product updated successfully' });
+    });
+});
+
+/* ================= DELETE PRODUCT ================= */
+app.post('/api/delete-product', (req, res) => {
+    const { id } = req.body;
+    if (!id) {
+        return res.status(400).json({ success: false, message: 'Missing product id' });
+    }
+    const sql = 'DELETE FROM products WHERE id = ?';
+    connection.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Error deleting product:', err);
+            return res.status(500).json({ success: false, message: 'Database error while deleting product' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+        res.json({ success: true, message: 'Product deleted successfully' });
+    });
 });
 
 app.listen(3000, function () {
