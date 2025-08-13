@@ -6,7 +6,7 @@
   <title>EmployeeFinder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* ——— your original CSS unchanged ——— */
+    /* Your existing CSS pasted exactly as you provided */
     body {
       margin: 0;
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -34,19 +34,6 @@
       white-space: nowrap
     }
 
-    .search-container {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      max-width: 420px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      box-shadow: 0 6px 24px rgba(30, 125, 134, .09);
-      border-radius: 1.2em;
-      background: #fff;
-      overflow: hidden
-    }
 
     .search-container form {
       flex: 1;
@@ -160,7 +147,8 @@
       flex-wrap: wrap;
       gap: 9px;
       justify-content: flex-start;
-      align-items: flex-start
+      align-items: flex-start;
+      margin-bottom: 32px
     }
 
     .card-link {
@@ -174,24 +162,24 @@
       max-width: 263px;
       margin-left: 10px;
       margin-right: 10px;
+      margin-bottom: 0;
       text-align: center;
       font-family: arial;
       border-radius: 10px;
-      height: 310px;
       background-color: white;
       position: relative;
-      transition: box-shadow .18s, transform .15s
+      transition: box-shadow .18s, transform .15s;
+      max-height: 300px;
+    }
+
+    .card-actions {
+      margin-top: 14px;
     }
 
     .card:hover {
       box-shadow: 0 10px 28px rgba(0, 0, 0, .2), 0 6px 20px #1ee6c266;
       transform: translateY(-4px) scale(1.04)
     }
-
-    .card-actions {
-  margin-top: 30px;
-}
-
 
     .price {
       color: grey;
@@ -267,386 +255,272 @@
       box-shadow: 0 2px 7px #ffd70022;
       letter-spacing: 0.1rem
     }
+   .dropdown-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#categoryFilter {
+  background: #f6fcfe;
+  border-radius: 0.7em;
+  border: none;
+  outline: none;
+  padding: 8px 18px;             /* Shorter vertical/horizontal space */
+  min-width: 150px;              /* Shorter minimum width */
+  max-width: 150px;              /* Shorter max width */
+  font-size: 1rem;
+  color: #0896d2;
+  font-weight: 600;
+  box-shadow: 0 3px 8px #1ee6c220;
+}
+#categoryFilter:focus {
+  background: #eafff6;
+}
+.search-container {
+  /* Remove absolute positioning */
+  position: static; /* or just remove 'position' completely */
+  max-width: none; /* remove max-width */
+  width: 400px; /* allow natural width */
+  display: flex;
+  justify-content: center;
+  box-shadow: 0 6px 24px rgba(30, 125, 134, .09);
+  border-radius: 1.2em;
+  background: #fff;
+  overflow: hidden;
+  flex: 1; /* to take available space inside flex container */
+}
 
- 
+
   </style>
 </head>
 
 <body>
 
   <nav class="navbar">
-    <span class="brand">Welcome</span>
+  <span class="brand">Welcome</span>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div class="dropdown-container">
+      <!-- Shorter dropdown box -->
+      <select id="categoryFilter"
+        style="border:none; outline:none; padding:8px 18px; font-size:1rem; background:#f6fcfe; border-radius:0.7em; color:#0896d2; font-weight:600; min-width:120px; max-width:160px;">
+        <option value="All" selected>All</option>
+        <!-- Will be filled by JS -->
+      </select>
+    </div>
     <div class="search-container">
       <form class="search-bar" action="/search" method="GET" autocomplete="off">
         <input type="text" name="query" placeholder="Search for item.." required />
         <button type="submit">Search</button>
       </form>
     </div>
-    <div class="profile-dropdown" style="position: relative;">
-      <span class="cart-icon" id="cartIcon">&#128722;</span>
-      <div class="profile-circle" id="profileCircle">IK</div>
-      <div class="dropdown-menu" id="dropdownMenu">
-        <button class="dropdown-btn" onclick="location.href='profile.html'">Profile</button>
-        <button class="dropdown-btn" onclick="location.href='update.html'">Update</button>
-        <button class="dropdown-btn" id="deleteBtn">Delete</button>
-      </div>
+  </div>
+  <!-- profile dropdown area unchanged -->
+  <div class="profile-dropdown" style="position: relative;">
+    <span class="cart-icon" id="cartIcon">&#128722;</span>
+    <div class="profile-circle" id="profileCircle">IK</div>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <button class="dropdown-btn" onclick="location.href='profile.html'">Profile</button>
+      <button class="dropdown-btn" onclick="location.href='update.html'">Update</button>
+      <button class="dropdown-btn" id="deleteBtn">Delete</button>
     </div>
-  </nav>
+  </div>
+</nav>
+
 
   <br><br>
+  <div id="productContainer"></div>
 
-  <!-- Row 1 -->
-  <div class="card-row">
-    <a href="product_details.html?id=1" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="jeans1.png" alt="Tailored Jeans" style="width:50%">
-        <h2>Tailored Jeans</h2>
-        <p class="price">$20</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="1">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=2" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★☆</div><br>
-        <img src="tshirt1.png" alt="Oversized Tees" style="width:50%">
-        <h2>Oversized Tees</h2>
-        <p class="price">$19</p>
-      </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="2">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=3" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★☆</div><br>
-        <img src="jeans2.png" alt="Straight Jeans" style="width:50%">
-        <h2>Straight Jeans</h2>
-        <p class="price">$18</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="3">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=4" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="shirt1.png" alt="Formal Shirt" style="width:50%">
-        <h2>Formal Shirt</h2>
-        <p class="price">$17</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="4">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=5" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★☆</div><br>
-        <img src="shirt2.jpg" alt="Long Sleeve Shirt" style="width:39.3%">
-        <h2 style="margin-top: 53px;">Long Sleeve Shirt</h2>
-        <p class="price">$16</p>
-        </a>
-        <p class="card-actions" style="margin-top: 32px;">
-          <button type="button" class="add-to-cart-btn" data-product-id="5">Add to Cart</button>
-        </p>
-      </div>
-    
-  </div><br><br><br><br><br>
-
-  <!-- Row 2 -->
-  <div class="card-row">
-    <a href="product_details.html?id=6" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="gray.png" alt="Gray Long Coat" style="width:50%">
-        <h2>Gray Long Coat</h2>
-        <p class="price">$1000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="6">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=7" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="per2.png" alt="Libre EDP Yves" style="width:50%">
-        <h2>Libre EDP Yves </h2>
-        <p class="price">$1000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="7">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=8" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★☆</div><br>
-        <img src="pink.png" alt="Pink Skirt" style="width:50%">
-        <h2>Pink Skirt</h2>
-        <p class="price">$2000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="8">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=9" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="black.png" alt="Black Long Coat" style="width:50%">
-        <h2>Black Long Coat</h2>
-        <p class="price">$500</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="9">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=10" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★☆</div><br>
-        <img src="floral.png" alt="Floral Skirt" style="width:50%">
-        <h2>Floral Skirt</h2>
-        <p class="price">$5000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="10">Add to Cart</button>
-        </p>
-      </div>
-    
-  </div><br><br><br><br><br>
-
-  <!-- Row 3 -->
-  <div class="card-row">
-    <a href="product_details.html?id=11" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="per1.png" alt="Ramsons" style="width:50%">
-        <h2>Ramsons</h2>
-        <p class="price">$20000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="11">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=12" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★☆</div><br>
-        <img src="green.png" alt="Green Long Coat" style="width:50%">
-        <h2>Green Long Coat</h2>
-        <p class="price">$200</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="12">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=13" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="per3.png" alt="Carolina Herrera" style="width:50%">
-        <h2>Carolina Herrera</h2>
-        <p class="price">$40000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="13">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=14" class="card-link">
-      <div class="card">
-        <div class="rating">★★★☆☆</div><br>
-        <img src="brown.png" alt="Brown Skirt" style="width:50%">
-        <h2>Brown Skirt</h2>
-        <p class="price">$100</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="14">Add to Cart</button>
-        </p>
-      </div>
-    
-    <a href="product_details.html?id=15" class="card-link">
-      <div class="card">
-        <div class="rating">★★★★★</div><br>
-        <img src="per4.png" alt="Victoria's Secret" style="width:50%">
-        <h2>Victoria's Secret</h2>
-        <p class="price">$70000</p>
-        </a>
-        <p class="card-actions">
-          <button type="button" class="add-to-cart-btn" data-product-id="15">Add to Cart</button>
-        </p>
-      </div>
-    
-  </div><br><br><br><br><br>
-
-<script>
-  // ==== Cart reset if a new/different user logs in ====
-  (function() {
-    const currentUserId = localStorage.getItem('userId');
-    const lastUserId = localStorage.getItem('lastUserId');
-    if (lastUserId !== currentUserId) {
-      localStorage.removeItem(`user_cart_quantities_${currentUserId}`);
-      localStorage.setItem('lastUserId', currentUserId);
-    }
-  })();
-
-  // ==== SHARED CART UTILITY (per-user cart key) ====
-  const userId = localStorage.getItem('userId');
-  const CART_KEY = `user_cart_quantities_${userId}`;
-  function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
-  function setCartToStorage(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-  function setProductQty(pid, qty) { const cart = getCartFromStorage(); if (qty > 0) cart[pid] = qty; else delete cart[pid]; setCartToStorage(cart); }
-  function getProductQty(pid) { const cart = getCartFromStorage(); return cart[pid] || 0; }
-
-  // Cart icon redirect
-  document.getElementById("cartIcon").onclick = () => window.location.href = "cart.html";
-
-  // Profile dropdown
-  const profile = document.getElementById('profileCircle');
-  const dropdown = document.getElementById('dropdownMenu');
-  document.addEventListener('click', (e) => {
-    if (profile.contains(e.target)) {
-      const isShown = dropdown.classList.toggle('show');
-      profile.classList.toggle('active', isShown);
-    } else if (!dropdown.contains(e.target)) {
-      dropdown.classList.remove('show');
-      profile.classList.remove('active');
-    }
-  });
-
-  // Login check & initials
-  if (!userId) {
-    window.location.href = 'login.html';
-  } else {
-    fetch('/user/' + encodeURIComponent(userId))
-      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-      .then(user => {
-        const initials = ((user.first_name?.[0] || '') + (user.last_name?.[0] || '')).toUpperCase();
-        document.getElementById('profileCircle').textContent = initials || '--';
-      })
-      .catch(() => {
-        alert('Could not load your profile.');
-        localStorage.removeItem('userId');
-        window.location.href = 'login.html';
-      });
-  }
-
-  // Delete user account
-  document.getElementById('deleteBtn').onclick = function () {
-    if (!userId) return location.href = 'login.html';
-    if (!confirm("Are you sure?")) return;
-    fetch('/delete-myself', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: userId })
-    })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        alert('Your account has been deleted.');
-        localStorage.removeItem('userId');
-        window.location.href = 'login.html';
-      } else {
-        alert(result.message || 'Could not delete.');
+  <script>
+    (function () {
+      const currentUserId = localStorage.getItem('userId');
+      const lastUserId = localStorage.getItem('lastUserId');
+      if (lastUserId !== currentUserId) {
+        localStorage.removeItem(`user_cart_quantities_${currentUserId}`);
+        localStorage.setItem('lastUserId', currentUserId);
       }
-    })
-    .catch(() => alert('Server error.'));
-  };
+    })();
 
-  // === PRODUCT CARD UI ===
-  document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".add-to-cart-btn").forEach(function (btn) {
-      const pid = btn.getAttribute("data-product-id");
-      const parent = btn.closest(".card-actions");
-      let qty = getProductQty(pid);
-      if (qty > 0) renderQuantityControls(parent, pid, qty);
-      else renderAddToCart(parent, pid);
+    const userId = localStorage.getItem('userId');
+    const CART_KEY = `user_cart_quantities_${userId}`;
+    function getCartFromStorage() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {} } catch { return {} } }
+    function setCartToStorage(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)) }
+    function setProductQty(pid, qty) { const cart = getCartFromStorage(); if (qty > 0) cart[pid] = qty; else delete cart[pid]; setCartToStorage(cart) }
+    function getProductQty(pid) { const cart = getCartFromStorage(); return cart[pid] || 0 }
+
+    document.getElementById("cartIcon").onclick = () => window.location.href = "cart.html";
+
+    const profile = document.getElementById('profileCircle');
+    const dropdown = document.getElementById('dropdownMenu');
+    document.addEventListener('click', (e) => {
+      if (profile.contains(e.target)) {
+        const isShown = dropdown.classList.toggle('show');
+        profile.classList.toggle('active', isShown);
+      } else if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+        profile.classList.remove('active');
+      }
     });
 
-    function renderQuantityControls(parent, pid, quantity) {
-      parent.innerHTML = `<span class="card-qty-ui">
+    if (!userId) {
+      window.location.href = 'login.html';
+    } else {
+      fetch('/user/' + encodeURIComponent(userId))
+        .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+        .then(user => {
+          const initials = ((user.first_name?.[0] || '') + (user.last_name?.[0] || '')).toUpperCase();
+          document.getElementById('profileCircle').textContent = initials || '--';
+        })
+        .catch(() => {
+          alert('Could not load your profile.');
+          localStorage.removeItem('userId');
+          window.location.href = 'login.html';
+        });
+    }
+
+    document.getElementById('deleteBtn').onclick = function () {
+      if (!userId) return location.href = 'login.html';
+      if (!confirm("Are you sure?")) return;
+      fetch('/delete-myself', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: userId }) })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            alert('Your account has been deleted.');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+          } else {
+            alert(result.message || 'Could not delete.');
+          }
+        })
+        .catch(() => alert('Server error.'));
+    };
+
+    // === NEW: Load categories into dropdown ===
+    document.addEventListener("DOMContentLoaded", function () {
+      const categoryDropdown = document.getElementById('categoryFilter');
+      fetch('/api/categories')
+        .then(res => res.json())
+        .then(cats => {
+          categoryDropdown.innerHTML = `<option value="All">All</option>` + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        })
+        .catch(err => console.error('Error loading categories', err));
+
+      // Load products initially
+      loadProducts("All");
+
+      categoryDropdown.addEventListener('change', function () {
+        loadProducts(this.value);
+      });
+    });
+
+    function loadProducts(category) {
+      const container = document.getElementById('productContainer');
+      fetch('/api/products-by-category?category=' + encodeURIComponent(category))
+        .then(res => res.json())
+        .then(products => {
+          if (!Array.isArray(products) || products.length === 0) {
+            container.innerHTML = `<p style="color:white;">No products available</p>`;
+            return;
+          }
+          container.innerHTML = "";
+          for (let i = 0; i < products.length; i += 5) {
+            const rowProducts = products.slice(i, i + 5);
+            const rowHtml = `
+            <div class="card-row">
+              ${rowProducts.map(prod => `
+                <a href="product_details.html?id=${prod.id}" class="card-link">
+                  <div class="card">
+                    <div class="rating">★★★★★</div><br>
+                    <img src="${prod.image_url}" alt="${prod.name}" style="width:50%">
+                    <h2>${prod.name}</h2>
+                    <p class="price">$${Number(prod.price).toFixed(2)}</p>
+                  </a>
+                  <p class="card-actions">
+                    <button type="button" class="add-to-cart-btn" data-product-id="${prod.id}">Add to Cart</button>
+                  </p>
+                </div>
+              `).join('')}
+            </div><br><br><br>
+          `;
+            container.innerHTML += rowHtml;
+          }
+          attachCartHandlers();
+        })
+        .catch(err => {
+          container.innerHTML = `<p style="color:white;">Error loading products</p>`;
+          console.error(err);
+        });
+    }
+
+    // Cart handlers (unchanged)
+    function attachCartHandlers() {
+      document.querySelectorAll(".add-to-cart-btn").forEach(function (btn) {
+        const pid = btn.getAttribute("data-product-id");
+        const parent = btn.closest(".card-actions");
+        let qty = getProductQty(pid);
+        if (qty > 0) renderQuantityControls(parent, pid, qty);
+        else renderAddToCart(parent, pid);
+      });
+      function renderQuantityControls(parent, pid, quantity) {
+        parent.innerHTML = `<span class="card-qty-ui">
         <button class="qty-btn minus" data-product-id="${pid}">-</button>
         <span class="cart-qty-value">${quantity}</span>
         <button class="qty-btn plus" data-product-id="${pid}">+</button>
       </span>`;
-      parent.querySelector(".minus").onclick = function () {
-        let qty = getProductQty(pid);
-        if (qty > 1) {
-          qty--;
+        parent.querySelector(".minus").onclick = function () {
+          let qty = getProductQty(pid);
+          if (qty > 1) {
+            qty--;
+            setProductQty(pid, qty);
+            renderQuantityControls(parent, pid, qty);
+            updateCartBackend(pid, qty);
+          } else {
+            setProductQty(pid, 0);
+            renderAddToCart(parent, pid);
+            removeFromCartBackend(pid);
+          }
+        };
+        parent.querySelector(".plus").onclick = function () {
+          let qty = getProductQty(pid);
+          qty++;
           setProductQty(pid, qty);
           renderQuantityControls(parent, pid, qty);
           updateCartBackend(pid, qty);
-        } else {
-          setProductQty(pid, 0);
-          renderAddToCart(parent, pid);
-          removeFromCartBackend(pid);
-        }
-      };
-      parent.querySelector(".plus").onclick = function () {
-        let qty = getProductQty(pid);
-        qty++;
-        setProductQty(pid, qty);
-        renderQuantityControls(parent, pid, qty);
-        updateCartBackend(pid, qty);
-      };
+        };
+      }
+      function renderAddToCart(parent, pid) {
+        parent.innerHTML = `<button class="add-to-cart-btn" data-product-id="${pid}">Add to Cart</button>`;
+        parent.querySelector(".add-to-cart-btn").onclick = function () {
+          setProductQty(pid, 1);
+          renderQuantityControls(parent, pid, 1);
+          updateCartBackend(pid, 1);
+        };
+      }
     }
 
-    function renderAddToCart(parent, pid) {
-      parent.innerHTML = `<button class="add-to-cart-btn" data-product-id="${pid}">Add to Cart</button>`;
-      parent.querySelector(".add-to-cart-btn").onclick = function () {
-        setProductQty(pid, 1);
-        renderQuantityControls(parent, pid, 1);
-        updateCartBackend(pid, 1);
-      };
+    function updateCartBackend(productId, quantity) {
+      fetch('/add-to-cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, productId, quantity }) });
     }
-  });
+    function removeFromCartBackend(productId) {
+      fetch('/remove-from-cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, productId }) });
+    }
 
-  // Backend calls
-  function updateCartBackend(productId, quantity) {
-    fetch('/add-to-cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, productId, quantity })
+    // Search stays unchanged
+    document.querySelector('.search-bar').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const input = this.query.value.trim();
+      if (!input) return;
+      fetch('/search?query=' + encodeURIComponent(input))
+        .then(res => { if (!res.ok) throw res; return res.json(); })
+        .then(data => {
+          if (data.productId) {
+            window.location.href = 'product_details.html?id=' + data.productId;
+          } else {
+            alert('No matching product found.');
+          }
+        })
+        .catch(() => { alert('Search error.') });
     });
-  }
-  function removeFromCartBackend(productId) {
-    fetch('/remove-from-cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, productId })
-    });
-  }
-
-  // Search bar submit
-  document.querySelector('.search-bar').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const input = this.query.value.trim();
-    if (!input) return;
-    fetch('/search?query=' + encodeURIComponent(input))
-      .then(res => { if (!res.ok) throw res; return res.json(); })
-      .then(data => {
-        if (data.productId) {
-          window.location.href = 'product_details.html?id=' + data.productId;
-        } else {
-          alert('No matching product found.');
-        }
-      })
-      .catch(err => {
-        alert('Search error.');
-      });
-  });
-</script>
-
-
-
+  </script>
 </body>
 
 </html>
