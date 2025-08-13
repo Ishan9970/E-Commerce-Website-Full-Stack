@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Product</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f7f9fb;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #ff4d4d;
+            padding: 15px;
+            color: white;
+            font-size: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header button {
+            background: white;
+            color: #ff4d4d;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        header button:hover {
+            background: #f1f1f1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #ff6666;
+            color: white;
+        }
+
+        button.delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button.delete-btn:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <span>Delete Product</span>
+        <button onclick="location.href='admin-dashboard.html'">Back</button>
+    </header>
+
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="productTable">
+                <tr>
+                    <td colspan="4">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+       if (localStorage.getItem('role') !== 'admin') {
+            alert("Access denied!");
+            window.location.href = 'login.html';
+        }
+
+        const tableBody = document.getElementById('productTable');
+
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(products => {
+                if (!Array.isArray(products) || products.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4">No Products</td></tr>`;
+                    return;
+                }
+                tableBody.innerHTML = products.map(p => `
+          <tr>
+            <td>${p.id}</td>
+            <td>${p.name}</td>
+            <td>$${Number(p.price).toFixed(2)}</td>
+            <td><button class="delete-btn" data-id="${p.id}" data-desc="${p.description}">Delete</button></td>
+          </tr>
+        `).join('');
+                attachDelete();
+            });
+//delete button clicked
+        function attachDelete() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = function () {
+                    const id = this.getAttribute('data-id');
+                    const desc = this.getAttribute('data-desc') || "No description available.";
+
+                    if (!confirm(`Product Description:\n\n${desc}\n\nAre you sure you want to delete this product?`)) return;
+
+                    fetch('/api/delete-product', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    })
+                        .then(res => res.json())
+                        .then(result => {
+                            if (result.success) {
+                                alert('Product deleted');
+                                location.reload();
+                            } else {
+                                alert(result.message || 'Delete failed');
+                            }
+                        });
+                };
+            });
+        }
+    </script>
+</body>
+
+</html>

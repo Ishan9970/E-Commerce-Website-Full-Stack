@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(to right, #1ee6c2, #0fc4a0);
+        margin: 0;
+        padding: 0;
+    }
+    header {
+        background: rgba(0,0,0,0.15);
+        padding: 15px 20px;
+        color: white;
+        font-size: 1.6rem;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    header button {
+        background: white;
+        color: #0fc4a0;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    header button:hover {
+        background: #f1f1f1;
+    }
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 80px;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+    .admin-card {
+        background: white;
+        width: 220px;
+        height: 150px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 20px rgba(0,0,0,0.15);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        cursor: pointer;
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+    .admin-card:hover {
+        transform: scale(1.05);
+        background: #f8fefd;
+    }
+    .admin-card h3 {
+        margin-top: 10px;
+        color: #0fc4a0;
+    }
+</style>
+</head>
+<body>
+
+<header>
+  <span>Admin Dashboard</span>
+  <button onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+  <div class="admin-card" onclick="location.href='insert_product.html'">
+    🛒
+    <h3>Insert Product</h3>
+  </div>
+  <div class="admin-card" onclick="location.href='delete_product.html'">
+    ❌
+    <h3>Delete Product</h3>
+  </div>
+  <div class="admin-card" onclick="location.href='update_product.html'">
+    ✏️
+    <h3>Update Product</h3>
+  </div>
+</div>
+
+<script>
+    if (localStorage.getItem('role') !== 'admin') {
+        alert("Access denied!");
+        window.location.href = 'login.html';
+    }
+
+    function logout() {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('role');
+        window.location.href = 'login.html';
+    }
+</script>
+</body>
+</html>
